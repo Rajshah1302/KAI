@@ -15,6 +15,7 @@ const navLinks = [
   { href: '/contribute/upload', label: 'Contribute' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/governance', label: 'Governance' },
+  { href: '/tokenomics', label: 'Tokenomics' },
 ];
 
 export function Header() {

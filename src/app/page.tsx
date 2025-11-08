@@ -2,10 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowRight,
-  BarChart,
   BookOpen,
   CircleDollarSign,
   Database,
+  GitBranch,
   Lock,
   MessageCircle,
   ShieldCheck,
@@ -138,7 +138,7 @@ export default function Home() {
           <div className="container px-4 md:px-6">
             <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="space-y-4">
-                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
+                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm font-semibold">
                   Our Mission
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -169,31 +169,31 @@ export default function Home() {
             <div className="container px-4 md:px-6">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <div className="space-y-2">
-                        <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
+                        <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm font-semibold">
                             Featured Datasets
                         </div>
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
                             Explore Our Data Marketplace
                         </h2>
                         <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                            Discover valuable datasets contributed by our community.
+                            Discover valuable datasets contributed by our community. All purchases help reward the data contributors and fund the DAO.
                         </p>
                     </div>
                 </div>
                 <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 lg:grid-cols-3 pt-12">
                     {featuredDatasets.map((dataset) => (
-                        <Card key={dataset.id} className="transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                        <Card key={dataset.id} className="transform transition-all duration-300 hover:scale-105 hover:shadow-xl bg-background">
                             <CardHeader>
                                 <CardTitle className="flex justify-between items-start">
-                                    <span>{dataset.name}</span>
+                                    <span className="text-lg">{dataset.name}</span>
                                     <Badge variant="secondary">{dataset.category}</Badge>
                                 </CardTitle>
                                 <CardDescription>{dataset.description}</CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-4">
                                 <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                        <CircleDollarSign className="h-4 w-4"/>
+                                    <div className="flex items-center gap-1 font-semibold">
+                                        <CircleDollarSign className="h-4 w-4 text-primary"/>
                                         <span>{dataset.price} KAI</span>
                                     </div>
                                     <div className="flex items-center gap-1">
@@ -201,7 +201,7 @@ export default function Home() {
                                         <span>{dataset.contributors} contributors</span>
                                     </div>
                                 </div>
-                                <Button asChild>
+                                <Button asChild className="w-full">
                                     <Link href={`/marketplace/${dataset.id}`}>View Details</Link>
                                 </Button>
                             </CardContent>
@@ -217,7 +217,7 @@ export default function Home() {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
-                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
+                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm font-semibold">
                   Key Benefits
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
@@ -249,14 +249,9 @@ export default function Home() {
             </div>
             <div className="mx-auto w-full max-w-sm space-y-2">
               <div className="flex justify-center gap-4 flex-wrap">
-                <Button asChild size="lg" variant="outline">
+                <Button asChild size="lg">
                   <Link href="#">
-                    <MessageCircle className="mr-2 h-5 w-5" /> Join Discord
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="#">
-                    <Twitter className="mr-2 h-5 w-5" /> Follow on X
+                    <MessageCircle className="mr-2 h-5 w-5" /> Join our Discord
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
@@ -276,7 +271,7 @@ export default function Home() {
 
 function BenefitCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <Card className="transform transition-all duration-300 hover:scale-105 hover:shadow-xl bg-background">
+    <Card className="transform transition-all duration-300 hover:scale-105 hover:shadow-xl bg-background hover:bg-card">
       <CardHeader className="flex flex-col items-center text-center">
         <div className="mb-4 rounded-full bg-primary/10 p-4">
           {icon}

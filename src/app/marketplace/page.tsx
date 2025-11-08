@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { CircleDollarSign, Users } from 'lucide-react';
+import { CircleDollarSign, Users, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const datasets = [
     { id: '1', name: 'Global Climate Data', description: 'Comprehensive climate metrics from 2000-2024.', category: 'Environment', price: 500, contributors: 150 },
@@ -21,20 +23,52 @@ export default function MarketplacePage() {
       title="Marketplace"
       description="Browse and purchase datasets from the community."
     >
+      <div className="mb-8 flex flex-col md:flex-row gap-4 justify-between items-center">
+        <div className="relative w-full md:max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search datasets..." className="pl-10" />
+        </div>
+        <div className="flex gap-4 w-full md:w-auto">
+            <Select>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="environment">Environment</SelectItem>
+                    <SelectItem value="healthcare">Healthcare</SelectItem>
+                    <SelectItem value="finance">Finance</SelectItem>
+                    <SelectItem value="technology">Technology</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                    <SelectItem value="biotech">Biotech</SelectItem>
+                </SelectContent>
+            </Select>
+             <Select>
+                <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="recent">Most Recent</SelectItem>
+                    <SelectItem value="popular">Most Popular</SelectItem>
+                    <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                    <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+      </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {datasets.map((dataset) => (
-          <Card key={dataset.id}>
+          <Card key={dataset.id} className="flex flex-col transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
             <CardHeader>
               <CardTitle className="flex justify-between items-start">
-                  <span>{dataset.name}</span>
+                  <span className="text-lg">{dataset.name}</span>
                   <Badge variant="outline">{dataset.category}</Badge>
               </CardTitle>
-              <CardDescription>{dataset.description}</CardDescription>
+              <CardDescription className="flex-grow">{dataset.description}</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent className="flex flex-col justify-end gap-4 mt-auto">
               <div className="flex justify-between items-center text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                      <CircleDollarSign className="h-4 w-4"/>
+                  <div className="flex items-center gap-1 font-semibold">
+                      <CircleDollarSign className="h-4 w-4 text-primary"/>
                       <span>{dataset.price} KAI</span>
                   </div>
                   <div className="flex items-center gap-1">

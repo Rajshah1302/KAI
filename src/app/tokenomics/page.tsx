@@ -4,17 +4,43 @@
 import { AppShell } from '@/components/layout/app-shell';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Pie, PieChart, Cell, ResponsiveContainer, Legend } from "recharts";
+import { Pie, PieChart, Cell } from "recharts";
 import { Coins, Database, Zap, Users, Shield, Award, Briefcase, GitPullRequest } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const tokenDistributionData = [
-  { name: 'Community Treasury', value: 40, color: 'hsl(var(--chart-1))' },
-  { name: 'Contributors & Rewards', value: 25, color: 'hsl(var(--chart-2))' },
-  { name: 'Ecosystem Development', value: 15, color: 'hsl(var(--chart-3))' },
-  { name: 'Team & Advisors', value: 10, color: 'hsl(var(--chart-4))' },
-  { name: 'Public Sale', value: 10, color: 'hsl(var(--chart-5))' },
+  { browser: 'Community Treasury', value: 40, fill: 'hsl(var(--chart-1))' },
+  { browser: 'Contributors & Rewards', value: 25, fill: 'hsl(var(--chart-2))' },
+  { browser: 'Ecosystem Development', value: 15, fill: 'hsl(var(--chart-3))' },
+  { browser: 'Team & Advisors', value: 10, fill: 'hsl(var(--chart-4))' },
+  { browser: 'Public Sale', value: 10, fill: 'hsl(var(--chart-5))' },
 ];
+
+const chartConfig = {
+  value: {
+    label: 'Value',
+  },
+  'Community Treasury': {
+    label: 'Community Treasury',
+    color: 'hsl(var(--chart-1))',
+  },
+  'Contributors & Rewards': {
+    label: 'Contributors & Rewards',
+    color: 'hsl(var(--chart-2))',
+  },
+  'Ecosystem Development': {
+    label: 'Ecosystem Development',
+    color: 'hsl(var(--chart-3))',
+  },
+  'Team & Advisors': {
+    label: 'Team & Advisors',
+    color: 'hsl(var(--chart-4))',
+  },
+  'Public Sale': {
+    label: 'Public Sale',
+    color: 'hsl(var(--chart-5))',
+  },
+};
 
 const tokenUtilities = [
     { icon: <Database className="h-6 w-6 text-primary"/>, title: "Data Purchase", description: "Acquire datasets from the marketplace using KAI tokens." },
@@ -54,45 +80,34 @@ export default function TokenomicsPage() {
                 </div>
             </CardContent>
         </Card>
-        <Card className="md:col-span-2">
+        <Card className="md:col-span-2 flex flex-col">
           <CardHeader>
             <CardTitle>Token Distribution</CardTitle>
             <CardDescription>Allocation of the total KAI token supply.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                    <Pie
-                        data={tokenDistributionData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        fill="hsl(var(--primary))"
-                        strokeWidth={2}
-                    >
-                    {tokenDistributionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                    </Pie>
-                     <Legend
-                        content={({ payload }) => {
-                          return (
-                            <ul className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-sm">
-                              {payload?.map((entry, index) => (
-                                <li key={`item-${index}`} className="flex items-center gap-2">
-                                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                                  <span>{entry.value} ({tokenDistributionData[index].value}%)</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )
-                        }}
-                      />
-                </PieChart>
-            </ResponsiveContainer>
+          <CardContent className="flex-1 pb-0">
+             <ChartContainer
+              config={chartConfig}
+              className="mx-auto aspect-square h-full max-h-[300px]"
+            >
+              <PieChart>
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
+                />
+                <Pie
+                  data={tokenDistributionData}
+                  dataKey="value"
+                  nameKey="browser"
+                  innerRadius={60}
+                  strokeWidth={5}
+                >
+                  {tokenDistributionData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ChartContainer>
           </CardContent>
         </Card>
       </div>

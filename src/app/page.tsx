@@ -74,54 +74,93 @@ const featuredDatasets = [
 
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find(p => p.id === 'hero-background');
+  const heroBgImage = PlaceHolderImages.find(p => p.id === 'hero-background');
   const aboutImage = PlaceHolderImages.find(p => p.id === 'about-illustration');
+  const heroCard1Image = PlaceHolderImages.find(p => p.id === 'hero-card-1');
+  const heroCard2Image = PlaceHolderImages.find(p => p.id === 'hero-card-2');
+
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background">
       <Header />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative w-full h-[70vh] md:h-[80vh] flex items-center justify-center text-center">
-          {heroImage && (
-            <Image
-              src={heroImage.imageUrl}
-              alt={heroImage.description}
-              fill
-              className="object-cover"
-              data-ai-hint={heroImage.imageHint}
-              priority
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-          <div className="absolute inset-0 bg-background/30" />
-          <div className="container relative px-4 md:px-6">
-            <div className="max-w-3xl mx-auto space-y-4">
-              <h1 className="text-4xl font-bold tracking-tighter text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
-                Own Your Data. Shape the Future.
-              </h1>
-              <p className="text-lg md:text-xl text-muted-foreground">
-                Kaivalya is a decentralized autonomous organization (DAO) dedicated to empowering individuals with ownership of their data.
-              </p>
-              <div className="flex justify-center gap-4">
-                <Button asChild size="lg">
-                  <Link href="/contribute/upload">
-                    Contribute Data <UploadCloud className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="secondary">
-                  <Link href="/marketplace">
-                    Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
+        <section className="relative w-full py-20 md:py-32 lg:py-40 flex items-center justify-center text-center overflow-hidden">
+            {heroBgImage && (
+              <Image
+                src={heroBgImage.imageUrl}
+                alt={heroBgImage.description}
+                fill
+                className="object-cover"
+                data-ai-hint={heroBgImage.imageHint}
+                priority
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/50 to-transparent" />
+            <div className="absolute inset-0 bg-background/50" />
+            
+            <div className="container relative mx-auto px-4 md:px-6 grid lg:grid-cols-2 gap-12 items-center">
+              <div className="max-w-3xl mx-auto lg:mx-0 text-left space-y-6">
+                <h1 className="text-4xl font-bold tracking-tighter text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
+                  Own Your Data. Shape the Future.
+                </h1>
+                <p className="text-lg md:text-xl text-muted-foreground">
+                  Kaivalya is a decentralized autonomous organization (DAO) dedicated to empowering individuals with ownership of their data.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button asChild size="lg">
+                    <Link href="/contribute/upload">
+                      Contribute Data <UploadCloud className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="secondary">
+                    <Link href="/marketplace">
+                      Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="relative hidden lg:flex justify-center items-center">
+                  {heroCard1Image && heroCard2Image && (
+                    <>
+                        <Card className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/3 rotate-12 w-64 shadow-2xl">
+                           <Image
+                            src={heroCard1Image.imageUrl}
+                            alt={heroCard1Image.description}
+                            width={400}
+                            height={300}
+                            className="object-cover rounded-t-lg"
+                            data-ai-hint={heroCard1Image.imageHint}
+                          />
+                          <CardContent className="p-4">
+                              <h3 className="font-bold">Market Analytics</h3>
+                              <p className="text-sm text-muted-foreground">Powered by KAI Data</p>
+                          </CardContent>
+                        </Card>
+                         <Card className="absolute bottom-0 left-0 transform -translate-x-1/4 translate-y-1/4 -rotate-12 w-72 shadow-2xl">
+                           <Image
+                            src={heroCard2Image.imageUrl}
+                            alt={heroCard2Image.description}
+                            width={400}
+                            height={300}
+                            className="object-cover rounded-t-lg"
+                            data-ai-hint={heroCard2Image.imageHint}
+                          />
+                          <CardContent className="p-4">
+                              <h3 className="font-bold">Contributor Dashboard</h3>
+                              <p className="text-sm text-muted-foreground">Track your earnings and impact.</p>
+                          </CardContent>
+                        </Card>
+                    </>
+                  )}
               </div>
             </div>
-          </div>
         </section>
 
         {/* Stats Section */}
         <section id="stats" className="w-full py-12 md:py-24 bg-card">
-            <div className="container px-4 md:px-6">
+            <div className="container mx-auto px-4 md:px-6">
                 <div className="grid gap-8 grid-cols-2 md:grid-cols-4">
                     {stats.map(stat => (
                         <div key={stat.label} className="text-center">
@@ -135,7 +174,7 @@ export default function Home() {
 
         {/* About KAI Section */}
         <section id="about" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 md:px-6">
             <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-center">
               <div className="space-y-4">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm font-semibold">
@@ -166,7 +205,7 @@ export default function Home() {
         
         {/* Featured Datasets Section */}
         <section id="datasets" className="w-full py-12 md:py-24 lg:py-32 bg-card">
-            <div className="container px-4 md:px-6">
+            <div className="container mx-auto px-4 md:px-6">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <div className="space-y-2">
                         <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm font-semibold">
@@ -214,7 +253,7 @@ export default function Home() {
 
         {/* Key Benefits Section */}
         <section id="benefits" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm font-semibold">
@@ -238,7 +277,7 @@ export default function Home() {
 
         {/* Get Involved Section */}
         <section id="get-involved" className="w-full py-12 md:py-24 lg:py-32 bg-card">
-          <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
+          <div className="container mx-auto grid items-center justify-center gap-4 px-4 text-center md:px-6">
             <div className="space-y-3">
               <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
                 Ready to Join the Data Revolution?

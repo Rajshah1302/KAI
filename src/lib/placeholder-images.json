@@ -3,14 +3,26 @@
     {
       "id": "hero-background",
       "description": "Abstract blue and white digital data streams",
-      "imageUrl": "https://images.unsplash.com/photo-1626908013351-800ddd734b8a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhYnN0cmFjdCUyMGRhdGF8ZW58MHx8fHwxNzYyNDY2NzIzfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "abstract data"
+      "imageUrl": "https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkYXNoYm9hcmQlMjB1aXxlbnwwfHx8fDE3NjI0NjY5NjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dashboard ui"
     },
     {
       "id": "about-illustration",
       "description": "Illustration of people collaborating around a data network",
       "imageUrl": "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx0ZWFtJTIwY29sbGFib3JhdGlvbnxlbnwwfHx8fDE3NjI1MTEyNDN8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "team collaboration"
+    },
+    {
+      "id": "hero-card-1",
+      "description": "A close-up of a stock market chart on a screen",
+      "imageUrl": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdG9jayUyMGNoYXJ0fGVufDB8fHx8MTc2MjYxNzcwMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "stock chart"
+    },
+    {
+      "id": "hero-card-2",
+      "description": "A dashboard with various charts and graphs",
+      "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkYXNoYm9hcmR8ZW58MHx8fHwxNzYyNjE3NzMxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dashboard"
     }
   ]
 }

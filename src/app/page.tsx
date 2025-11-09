@@ -28,7 +28,7 @@ import { Header } from '@/components/layout/header';
 import { Badge } from '@/components/ui/badge';
 import PixelBlast from '@/components/PixelBlast';
 import aboutImage from "@/public/about_img.jpg"
-
+import logo from '@/public/logo.png'
 const benefits = [
   {
     icon: <ShieldCheck className="h-8 w-8 text-primary" />,
@@ -113,33 +113,40 @@ export default function Home() {
               transparent
             />
           </div>
+
+          {/* 🔹 Gradient Overlay */}
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-background/70 via-background/50 to-transparent" />
 
-          {/* 🔹 Left-side Hero Content */}
-          <div className="relative z-10 container mx-auto px-4 md:px-6 flex flex-col items-start text-left space-y-6">
-            <h1 className="text-4xl font-bold tracking-tighter text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
-              Own Your Data. <br /> Shape the Future.
-            </h1>
+          {/* 🔹 Main Content */}
+          <div className="relative z-10 container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-8">
 
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-              Kaivalya is a decentralized autonomous organization (DAO) dedicated to empowering individuals with ownership of their data.
-            </p>
+            {/* Left Text Block */}
+            <div className="flex-2 flex flex-col items-start text-left space-y-6">
+              <h1 className="text-4xl font-bold tracking-tighter text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
+                Own Your Data. <br /> Shape the Future.
+              </h1>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button asChild size="lg">
-                <Link href="/contribute/upload">
-                  Contribute Data <UploadCloud className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
+                Kaivalya is a decentralized autonomous organization (DAO) dedicated to empowering individuals with ownership of their data.
+              </p>
 
-              <Button asChild size="lg" variant="secondary">
-                <Link href="/marketplace">
-                  Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button asChild size="lg">
+                  <Link href="/contribute/upload">
+                    Contribute Data <UploadCloud className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+
+                <Button asChild size="lg" variant="secondary">
+                  <Link href="/marketplace">
+                    Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
+
 
 
         {/* Stats Section */}

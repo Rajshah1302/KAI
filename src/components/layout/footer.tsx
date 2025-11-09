@@ -1,5 +1,7 @@
 import { DatabaseZap, Twitter, MessageCircle, GitBranch } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+import logo from '@/public/logo.png'
 
 export function Footer() {
   return (
@@ -7,7 +9,7 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
           <div className="flex items-center gap-2 mb-4 md:mb-0">
-            <DatabaseZap className="h-6 w-6 text-primary" />
+            <Image src={logo} height={30} width={30} alt={''} />
             <span className="font-bold text-lg">Kaivalya</span>
           </div>
           <div className="text-sm text-muted-foreground mb-4 md:mb-0">

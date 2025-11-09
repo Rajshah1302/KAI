@@ -83,7 +83,7 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative w-full min-h-screen flex items-center overflow-hidden">
+        <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
           {/* 🔹 PixelBlast Background */}
           <div className="absolute inset-0 z-0">
             <PixelBlast
@@ -96,7 +96,7 @@ export default function Home() {
               }}
               variant="circle"
               pixelSize={6}
-              color="#A7D8FF" // light blue background
+              color="#dbeafe" // light blue background
               patternScale={3}
               patternDensity={1.2}
               pixelSizeJitter={0.5}
@@ -118,16 +118,13 @@ export default function Home() {
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-background/70 via-background/50 to-transparent" />
 
           {/* 🔹 Main Content */}
-          <div className="relative z-10 container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-8">
-
-            {/* Left Text Block */}
-            <div className="flex-2 flex flex-col items-start text-left space-y-6">
+          <div className="relative z-10 container mx-auto px-4 md:px-6 flex flex-col items-center text-center space-y-6">
               <h1 className="text-4xl font-bold tracking-tighter text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
                 Own Your Data. <br /> Shape the Future.
               </h1>
 
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-                Kaivalya is a decentralized autonomous organization (DAO) dedicated to empowering individuals with ownership of their data.
+              <p className="text-lg md:text-xl text-muted-foreground max-w-3xl">
+                Kaivalya is a decentralized autonomous organization (DAO) dedicated to empowering individuals with ownership of their data, creating a transparent and equitable digital economy.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -143,7 +140,6 @@ export default function Home() {
                   </Link>
                 </Button>
               </div>
-            </div>
           </div>
         </section>
 
@@ -266,7 +262,7 @@ export default function Home() {
         </section>
 
         {/* Get Involved Section */}
-        <section id="get-involved" className="w-full py-12 md:py-24 lg:py-32 bg-card">
+        <section id="get-involved" className="w-full py-12 md-py-24 lg:py-32 bg-card">
           <div className="container mx-auto grid items-center justify-center gap-4 px-4 text-center md:px-6">
             <div className="space-y-3">
               <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">

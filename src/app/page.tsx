@@ -146,8 +146,8 @@ export default function Home() {
               textClassName="text-4xl sm:text-5xl md:text-6xl font-bold leading-snug text-[#003366] max-w-[900px]"
             >
               {`
-      Own your data with privacy, trust, and collective strength.
-      `}
+We asked AI who owns your data.  It said: “Not you.”
+So we built Kai.      `}
             </ScrollReveal>
           </div>
         </section>

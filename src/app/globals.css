@@ -70,3 +70,51 @@
     @apply scroll-smooth;
   }
 }
+::selection {
+  background-color: #a8e6ff; /* light cyan / pastel blue */
+  color: #003366; /* dark blue text for contrast */
+}
+
+/* For Firefox */
+::-moz-selection {
+  background-color: #a8e6ff;
+  color: #003366;
+}
+
+/* 🌊 Elegant pastel blue scrollbar (cross-browser) */
+
+/* Chrome, Safari, Edge */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(167, 216, 255, 0.15); /* soft blue track */
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #a8d8ff 0%, #7cc5ff 100%);
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.5); /* gives it a soft 3D edge */
+  transition: all 0.3s ease;
+}
+
+/* Hover effect for better feel */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9ed3ff 0%, #66bfff 100%);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #a8d8ff rgba(167, 216, 255, 0.15);
+  scroll-behavior: smooth;
+}
+
+/* Optional: softer kinetic scrolling on iOS/macOS */
+body {
+  -webkit-overflow-scrolling: touch;
+}

@@ -15,6 +15,7 @@ import aboutImage from '@/public/about_img.jpg';
 import ScrollReveal from "@/components/ScrollReveal"
 import img_2 from "@/public/WAL.png"
 import growth_img from "@/public/growth.jpg"
+import walrus_svg from "@/public/68b56b16fd3c36b689ce5044_walrus.svg"
 const PixelBlast = dynamic(() => import('@/components/PixelBlast'), { ssr: false });
 
 const fadeInUp = {
@@ -131,7 +132,7 @@ export default function Home() {
 
         {/* ===== KAI ScrollReveal Tagline (Fixed) ===== */}
         <section
-          className="relative flex items-center justify-center min-h-[160vh] bg-[#f0f9ff] overflow-hidden"
+          className="relative flex items-center justify-center min-h-[150vh] bg-[#f0f9ff] overflow-hidden"
           aria-label="KAI tagline"
         >
           {/* Background Glow */}
@@ -279,7 +280,7 @@ So we built Kai.      `}
 
 
         {/* BENEFITS */}
-        <section id="benefits" className="py-20 md:py-32 bg-[#dbeafe]">
+        {/* <section id="benefits" className="py-20 md:py-32 bg-[#dbeafe]">
           <motion.div
             variants={fadeInUp}
             initial="hidden"
@@ -311,7 +312,65 @@ So we built Kai.      `}
               </motion.div>
             ))}
           </div>
+        </section>*/}
+        <section className='h-[100vh] bg-[#f0f9ff]'>
+
         </section>
+        {/* ===== END CTA SECTION ===== */}
+
+        <section className="relative w-full flex flex-col items-center justify-center text-center bg-[#f0f9ff] overflow-hidden">
+          {/* 🌸 Text Section with Motion */}
+          <motion.div
+            initial={{ opacity: 0, y: 60 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            viewport={{ once: true }}
+            className="relative z-10 space-y-4 px-6 py-24 md:py-32 bg-[#f0f9ff] w-full"
+          >
+            <motion.h2
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
+              className="text-4xl md:text-5xl font-bold text-[#003366]"
+            >
+              You’ve scrolled this far...
+            </motion.h2>
+
+            <motion.p
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.1, ease: "easeOut", delay: 0.4 }}
+              className="text-lg md:text-xl text-[#003366]/80 max-w-2xl mx-auto"
+            >
+              Maybe it’s a sign! <br />
+              Join{" "}
+              <span className="font-semibold text-[#0077cc]">Kaivalya</span> and help
+              build the future of ethical data ownership.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.6 }}
+              className="pt-6"
+            >
+              <Link href="/">
+                <Button
+                  size="lg"
+                  className="bg-[#a8d8ff] hover:bg-[#93c5fd] text-[#003366] text-lg font-semibold shadow-md hover:scale-105 transition-transform"
+                >
+                  Join KAI
+                </Button>
+              </Link>
+            </motion.div>
+          </motion.div>
+
+
+        </section>
+
+
+
+
       </main>
       <Footer />
     </div>

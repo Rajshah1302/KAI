@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'Kaivalya - Own Your Data',
+  title: 'Kai',
   description:
     'A minimalistic landing page for the KAI Data DAO (Kaivalya), designed to introduce its mission and value proposition.',
 };

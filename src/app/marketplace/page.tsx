@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -9,7 +9,7 @@ import { CircleDollarSign, Users, Search, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const datasets = [
+const defaultDatasets = [
   { id: '1', name: 'Global Climate Data', description: 'Comprehensive climate metrics from 2000–2024.', category: 'Environment', price: 500, contributors: 150 },
   { id: '2', name: 'Medical Imaging Scans', description: 'A large collection of anonymized MRI scans.', category: 'Healthcare', price: 1200, contributors: 80 },
   { id: '3', name: 'Consumer Spending Habits', description: 'Aggregated retail spending data across various sectors.', category: 'Finance', price: 800, contributors: 300 },
@@ -19,9 +19,29 @@ const datasets = [
 ];
 
 export default function MarketplacePage() {
+  const [datasets, setDatasets] = useState(defaultDatasets);
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
   const [sortOption, setSortOption] = useState('');
+
+  useEffect(() => {
+    // This code runs only on the client, after the component mounts
+    try {
+      const storedDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+      // Combine default datasets with locally stored ones, ensuring no duplicates by id
+      const combined = [...defaultDatasets];
+      const storedIds = new Set(combined.map(d => d.id));
+      for (const stored of storedDatasets) {
+        if (!storedIds.has(stored.id)) {
+          combined.push(stored);
+        }
+      }
+      setDatasets(combined);
+    } catch (e) {
+      console.error("Could not load datasets from local storage", e);
+      setDatasets(defaultDatasets); // Fallback to default
+    }
+  }, []);
 
   // Reset all filters
   const clearFilters = () => {
@@ -50,7 +70,7 @@ export default function MarketplacePage() {
     if (sortOption === 'popular') result.sort((a, b) => b.contributors - a.contributors);
 
     return result;
-  }, [searchTerm, category, sortOption]);
+  }, [datasets, searchTerm, category, sortOption]);
 
   return (
     <AppShell
@@ -83,6 +103,7 @@ export default function MarketplacePage() {
               <SelectItem value="technology">Technology</SelectItem>
               <SelectItem value="marketing">Marketing</SelectItem>
               <SelectItem value="biotech">Biotech</SelectItem>
+              <SelectItem value="user contributed">User Contributed</SelectItem>
             </SelectContent>
           </Select>
 

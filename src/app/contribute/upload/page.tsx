@@ -28,15 +28,18 @@ export default function UploadDataPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!file) {
+    if (!file || !datasetName || !datasetDescription) {
       toast({
         variant: 'destructive',
-        title: 'No file selected',
-        description: 'Please select a file to upload.',
+        title: 'Missing Information',
+        description: 'Please fill out all fields and select a file to upload.',
       });
       return;
     }
 
+    // We don't need to read the file on the client for Walrus upload
+    // The hook will handle the file object directly if modified to do so,
+    // but for now we'll send the metadata. The hook expects a file data URI.
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = async () => {
@@ -50,19 +53,56 @@ export default function UploadDataPage() {
 
       const result = await storeLendingData(dataToStore);
 
-      if (result?.success) {
+      if (result?.success && result.blobId) {
         toast({
           title: 'Upload Successful!',
           description: `Your data has been stored with Blob ID: ${result.blobId}`,
         });
+
+        // Store metadata in local storage
+        try {
+          const existingDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+          const newDataset = {
+            id: result.blobId, // Use blobId as the unique ID
+            name: datasetName,
+            description: datasetDescription,
+            // Add other relevant metadata, matching marketplace structure
+            category: 'User Contributed', // Example category
+            price: Math.floor(Math.random() * 1000) + 100, // Example price
+            contributors: 1, // The current user
+          };
+          
+          existingDatasets.push(newDataset);
+          localStorage.setItem('datasets', JSON.stringify(existingDatasets));
+          
+          // Clear the form
+          setDatasetName('');
+          setDatasetDescription('');
+          setFile(null);
+
+        } catch (e) {
+            console.error("Failed to save to local storage", e);
+            toast({
+                variant: 'destructive',
+                title: 'Local Storage Error',
+                description: 'Could not save dataset to your browser\'s local storage.',
+            });
+        }
       } else {
         toast({
           variant: 'destructive',
           title: 'Upload Failed',
-          description: 'Could not store data on Walrus. Please try again.',
+          description: result?.error || 'Could not store data on Walrus. Please try again.',
         });
       }
     };
+    reader.onerror = () => {
+        toast({
+            variant: 'destructive',
+            title: 'File Read Error',
+            description: 'Could not read the selected file.',
+        });
+    }
   };
 
   return (
@@ -86,6 +126,7 @@ export default function UploadDataPage() {
                 placeholder="e.g., NYC Taxi Data Q2 2024"
                 value={datasetName}
                 onChange={(e) => setDatasetName(e.target.value)}
+                required
               />
             </div>
             <div className="grid gap-2">
@@ -95,6 +136,7 @@ export default function UploadDataPage() {
                 placeholder="Provide a detailed description of your dataset..."
                 value={datasetDescription}
                 onChange={(e) => setDatasetDescription(e.target.value)}
+                required
               />
             </div>
              <div className="grid gap-2">

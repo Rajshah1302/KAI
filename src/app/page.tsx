@@ -364,13 +364,7 @@ So we built Kai.      `}
               </Link>
             </motion.div>
           </motion.div>
-
-
         </section>
-
-
-
-
       </main>
       <Footer />
     </div>

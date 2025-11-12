@@ -37,9 +37,6 @@ export default function UploadDataPage() {
       return;
     }
 
-    // We don't need to read the file on the client for Walrus upload
-    // The hook will handle the file object directly if modified to do so,
-    // but for now we'll send the metadata. The hook expects a file data URI.
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = async () => {
@@ -55,21 +52,20 @@ export default function UploadDataPage() {
 
       if (result?.success && result.blobId) {
         toast({
-          title: 'Upload Successful!',
-          description: `Your data has been stored with Blob ID: ${result.blobId}`,
+          title: 'Proposal Submitted!',
+          description: `Your dataset has been submitted for approval. Blob ID: ${result.blobId}`,
         });
 
-        // Store metadata in local storage
+        // Store metadata in local storage to simulate proposal creation
         try {
           const existingDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
           const newDataset = {
-            id: result.blobId, // Use blobId as the unique ID
+            id: result.blobId, 
             name: datasetName,
             description: datasetDescription,
-            // Add other relevant metadata, matching marketplace structure
-            category: 'User Contributed', // Example category
-            price: Math.floor(Math.random() * 1000) + 100, // Example price
-            contributors: 1, // The current user
+            category: 'User Contributed',
+            price: 0, // Price is set in Phase 4
+            contributors: 1, 
           };
           
           existingDatasets.push(newDataset);
@@ -85,7 +81,7 @@ export default function UploadDataPage() {
             toast({
                 variant: 'destructive',
                 title: 'Local Storage Error',
-                description: 'Could not save dataset to your browser\'s local storage.',
+                description: 'Could not save dataset proposal to your browser\'s local storage.',
             });
         }
       } else {
@@ -107,14 +103,14 @@ export default function UploadDataPage() {
 
   return (
     <AppShell
-      title="Upload & Donate Data"
-      description="Register and upload encrypted data to the DAO."
+      title="Submit Data for Approval"
+      description="Upload your data to Walrus and create a DAO proposal to add it to the marketplace."
     >
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle>Contribute Your Data</CardTitle>
           <CardDescription>
-            Fill out the form below to register your dataset. Your data will be encrypted and secured on the network via Walrus.
+            Your data will be uploaded to Walrus, and a "Dataset Approval" proposal will be automatically created for the DAO to vote on. No KAI is required to submit.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -140,7 +136,7 @@ export default function UploadDataPage() {
               />
             </div>
              <div className="grid gap-2">
-                <Label htmlFor="file-upload">Upload Encrypted Data File</Label>
+                <Label htmlFor="file-upload">Upload Data File (Encrypted)</Label>
                 <div className="flex items-center justify-center w-full">
                     <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -159,7 +155,7 @@ export default function UploadDataPage() {
                 </div>
             </div>
             <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Storing on Walrus...' : 'Register & Upload Dataset'}
+              {isLoading ? 'Uploading to Walrus...' : 'Submit Dataset Proposal'}
             </Button>
           </form>
         </CardContent>

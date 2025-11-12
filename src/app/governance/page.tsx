@@ -1,11 +1,15 @@
 
+"use client"
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, ThumbsDown, ThumbsUp, Eye, Clock } from 'lucide-react';
 
-const proposals = [
+const defaultProposals = [
     { id: 1, title: 'Approve new dataset: "NYC Taxi Rides"', status: 'Active', type: 'Dataset Approval', votes_for: 72, votes_against: 8, end_date: '3 days remaining' },
     { id: 2, title: 'Create new category: "Geospatial Data"', status: 'Passed', type: 'Category Creation', votes_for: 88, votes_against: 12, end_date: 'Ended 2 weeks ago' },
     { id: 4, title: 'Set price for "Medical Imaging Scans"', status: 'Active', type: 'Pricing', votes_for: 34, votes_against: 16, end_date: '1 day remaining' },
@@ -13,15 +17,37 @@ const proposals = [
 ];
 
 export default function GovernancePage() {
+  const [proposals, setProposals] = useState(defaultProposals);
+
+  useEffect(() => {
+    // Fetch proposals from local storage on component mount
+    try {
+      const storedProposals = JSON.parse(localStorage.getItem('proposals') || '[]');
+      const combined = [...defaultProposals];
+      const storedIds = new Set(combined.map(p => p.id));
+      for (const stored of storedProposals) {
+        if (!storedIds.has(stored.id)) {
+          combined.push(stored);
+        }
+      }
+      setProposals(combined);
+    } catch (e) {
+      console.error("Could not load proposals from local storage", e);
+      setProposals(defaultProposals); // Fallback to default
+    }
+  }, []);
+
   return (
     <AppShell
       title="Governance & Proposals"
       description="Vote on dataset approvals, category creation, pricing, and other DAO matters."
     >
       <div className="flex justify-end mb-6">
-        <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Proposal
+        <Button asChild>
+            <Link href="/governance/create">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create New Proposal
+            </Link>
         </Button>
       </div>
       <div className="grid gap-6">
@@ -39,7 +65,7 @@ export default function GovernancePage() {
                 }
             }
 
-            const { badge, border, iconColor } = getStatusClasses();
+            const { border, iconColor } = getStatusClasses();
             
             const getBadgeClass = () => {
                 switch(proposal.status) {
@@ -56,7 +82,7 @@ export default function GovernancePage() {
                 <CardHeader>
                   <div className="flex justify-between items-start gap-4">
                     <CardTitle className="text-lg font-semibold">{proposal.title}</CardTitle>
-                    <Badge variant={badge} className={getBadgeClass()}>{proposal.status}</Badge>
+                    <Badge className={getBadgeClass()}>{proposal.status}</Badge>
                   </div>
                   <CardDescription className="flex items-center gap-4 text-xs pt-1">
                       <Badge variant="outline">{proposal.type}</Badge>

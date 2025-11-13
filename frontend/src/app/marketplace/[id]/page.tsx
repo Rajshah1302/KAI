@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,7 +5,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CircleDollarSign, FileText, Users, ShieldCheck, Download, Loader2 } from 'lucide-react';
+import { Coins, FileText, Users, ShieldCheck, Download, Loader2 } from 'lucide-react';
 import { useLendingDataStorage } from '@/hooks/use-walrus';
 import { useToast } from '@/hooks/use-toast';
 
@@ -92,13 +91,9 @@ export default function DatasetDetailsPage({ params }: { params: { id: string } 
 
   return (
     <AppShell>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">{dataset.name}</h1>
-        <p className="text-muted-foreground">{`Detailed view of the "${dataset.name}" dataset.`}</p>
-      </div>
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-            <Card>
+            <Card className="bg-card/60 backdrop-blur-sm border-border/50 rounded-2xl">
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <CardTitle className="text-2xl">{dataset.name}</CardTitle>
@@ -130,16 +125,16 @@ export default function DatasetDetailsPage({ params }: { params: { id: string } 
             </Card>
         </div>
         <div>
-            <Card className='bg-card/80 border-blue-200/50 shadow-lg'>
+            <Card className='bg-card/60 backdrop-blur-sm border-border/50 rounded-2xl shadow-lg'>
                 <CardHeader className="text-center">
                     <CardTitle>Purchase Dataset</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                      <div className="flex items-center justify-center text-3xl font-bold">
-                        <CircleDollarSign className="h-7 w-7 mr-2 text-primary" />
+                        <Coins className="h-7 w-7 mr-2 text-primary" />
                         {dataset.price} KAI
                     </div>
-                    <Button size="lg" className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 text-white hover:scale-105 transition-transform" onClick={handleDownload} disabled={isDownloading || isLoading}>
+                    <Button size="lg" className="w-full" onClick={handleDownload} disabled={isDownloading || isLoading}>
                         {isDownloading || isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -165,5 +160,3 @@ export default function DatasetDetailsPage({ params }: { params: { id: string } 
     </AppShell>
   );
 }
-
-    

@@ -11,13 +11,9 @@ const purchasedDatasets = [
 export default function AccessPage() {
   return (
     <AppShell>
-        <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Access & Download</h1>
-            <p className="text-muted-foreground">View your purchased datasets and access decryption keys.</p>
-        </div>
         <div className="grid gap-4">
             {purchasedDatasets.map(dataset => (
-                <Card key={dataset.id}>
+                <Card key={dataset.id} className="bg-card/60 backdrop-blur-sm border-border/50 rounded-2xl">
                     <CardHeader>
                         <CardTitle>{dataset.name}</CardTitle>
                     </CardHeader>

@@ -18,6 +18,7 @@ import logo from '@/public/logo.png';
 const navLinks = [
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/contribute/upload', label: 'Contribute' },
+  { href: '/governance', label: 'Governance' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/tokenomics', label: 'Tokenomics' },
 ];
@@ -26,13 +27,13 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-blue-100 shadow-sm">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
+    <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-lg border-b border-border/50">
+      <div className="container flex h-20 max-w-screen-xl items-center justify-between px-4">
         {/* Left: Logo + Nav */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <Image src={logo} height={32} width={32} alt="Kai Logo" />
-            <span className="font-bold text-xl text-[#002B5B]">Kai</span>
+            <span className="font-bold text-xl text-foreground">Kai</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -47,11 +48,12 @@ export function Header() {
                   href={link.href}
                   className={`relative text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'text-[#007BFF] after:content-[""] after:absolute after:left-0 after:-bottom-1 after:w-full after:h-[2px] after:bg-[#007BFF] after:rounded-full'
-                      : 'text-[#002B5B] hover:text-[#007BFF]'
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-primary'
                   }`}
                 >
                   {link.label}
+                   {isActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 w-4 bg-primary rounded-full" />}
                 </Link>
               );
             })}
@@ -60,10 +62,7 @@ export function Header() {
 
         {/* Right: Wallet + Mobile */}
         <div className="flex items-center gap-3">
-          <Button
-            asChild
-            className="bg-gradient-to-r from-[#007BFF] to-[#00BFFF] text-white hover:from-[#0066d1] hover:to-[#00a0e0] transition-all duration-200"
-          >
+          <Button asChild>
             <Link href="/auth/wallet-connect">
               <LogIn className="mr-2 h-4 w-4" /> Connect Wallet
             </Link>
@@ -81,7 +80,7 @@ function MobileNav({ pathname }: { pathname: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="border-blue-200 text-[#002B5B]">
+        <Button variant="outline" size="icon">
           <svg
             className="w-5 h-5"
             xmlns="http://www.w3.org/2000/svg"
@@ -99,8 +98,8 @@ function MobileNav({ pathname }: { pathname: string }) {
           <span className="sr-only">Open main menu</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-white text-[#002B5B] border border-blue-100 shadow-md">
-        <DropdownMenuLabel className="text-[#007BFF] font-semibold">Menu</DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Menu</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {navLinks.map(link => {
           const isActive =
@@ -112,8 +111,8 @@ function MobileNav({ pathname }: { pathname: string }) {
               asChild
               className={`transition-all ${
                 isActive
-                  ? 'text-[#007BFF] font-semibold'
-                  : 'hover:text-[#007BFF]'
+                  ? 'bg-muted font-semibold'
+                  : ''
               }`}
             >
               <Link href={link.href}>{link.label}</Link>

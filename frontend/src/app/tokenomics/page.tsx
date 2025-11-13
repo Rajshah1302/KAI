@@ -1,4 +1,3 @@
-
 "use client"
 
 import { AppShell } from '@/components/layout/app-shell';
@@ -52,12 +51,8 @@ const tokenUtilities = [
 export default function TokenomicsPage() {
   return (
     <AppShell>
-        <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">KAI Tokenomics</h1>
-            <p className="text-muted-foreground">Understanding the economy of the Kaivalya DAO.</p>
-        </div>
       <div className="grid gap-8 md:grid-cols-3">
-         <Card className="md:col-span-1">
+         <Card className="md:col-span-1 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50">
             <CardHeader>
                 <CardTitle>Token Overview</CardTitle>
                 <CardDescription>Key details about the KAI token.</CardDescription>
@@ -81,12 +76,12 @@ export default function TokenomicsPage() {
                 </div>
             </CardContent>
         </Card>
-        <Card className="md:col-span-2 flex flex-col">
+        <Card className="md:col-span-2 flex flex-col bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50">
           <CardHeader>
             <CardTitle>Token Distribution</CardTitle>
             <CardDescription>Allocation of the total KAI token supply.</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 pb-0">
+          <CardContent className="flex-1 pb-0 flex items-center justify-center">
              <ChartContainer
               config={chartConfig}
               className="mx-auto aspect-square h-full max-h-[300px]"
@@ -113,15 +108,15 @@ export default function TokenomicsPage() {
         </Card>
       </div>
       <div className="mt-8">
-        <Card>
+        <Card className="bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50">
             <CardHeader>
                 <CardTitle>Token Utility</CardTitle>
                 <CardDescription>The primary uses for the KAI token within the ecosystem.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {tokenUtilities.map(utility => (
-                    <div key={utility.title} className="flex flex-col items-center text-center p-4 rounded-lg bg-muted/50">
-                        <div className="mb-4 rounded-full bg-background p-3">
+                    <div key={utility.title} className="flex flex-col items-center text-center p-4 rounded-xl bg-background/50 border">
+                        <div className="mb-4 rounded-full bg-primary/10 p-3">
                             {utility.icon}
                         </div>
                         <h3 className="font-semibold mb-1">{utility.title}</h3>

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CircleDollarSign, Users, Search, XCircle, Tag, TrendingUp } from 'lucide-react';
+import { CircleDollarSign, Users, Search, XCircle, Tag, ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
@@ -20,13 +20,13 @@ const defaultDatasets = [
   { id: '6', name: 'Genomic Sequences', description: 'Anonymized human genomic data for research.', category: 'Biotech', price: 5000, contributors: 25 },
 ];
 
-const allCategories = [...new Set(defaultDatasets.map(d => d.category)), "User Contributed"];
+const allCategories = ['all', ...new Set(defaultDatasets.map(d => d.category)), "User Contributed"];
 
 export default function MarketplacePage() {
   const [datasets, setDatasets] = useState(defaultDatasets);
   const [searchTerm, setSearchTerm] = useState('');
-  const [category, setCategory] = useState('');
-  const [sortOption, setSortOption] = useState('');
+  const [category, setCategory] = useState('all');
+  const [sortOption, setSortOption] = useState('popular');
 
   useEffect(() => {
     try {
@@ -47,8 +47,8 @@ export default function MarketplacePage() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setCategory('');
-    setSortOption('');
+    setCategory('all');
+    setSortOption('popular');
   };
 
   const filteredDatasets = useMemo(() => {
@@ -76,42 +76,42 @@ export default function MarketplacePage() {
     <AppShell>
       <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
         {/* Left Sidebar for Filters */}
-        {/* <aside className="hidden md:flex flex-col gap-6 sticky top-24">
+        <aside className="hidden md:flex flex-col gap-6 sticky top-24 bg-card/50 p-6 rounded-2xl border border-border/50 backdrop-blur-sm">
           <h2 className="text-xl font-semibold">Filters</h2>
           
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search datasets..."
-              className="pl-10"
+              className="pl-10 bg-background/70"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
           <div className="grid gap-2">
-            <h3 className="font-semibold text-sm">Category</h3>
+            <h3 className="font-semibold text-sm text-muted-foreground">Category</h3>
             <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-background/70">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
                   {allCategories.map(cat => (
-                    <SelectItem key={cat} value={cat.toLowerCase()}>{cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
             </Select>
           </div>
           
           <div className="grid gap-2">
-            <h3 className="font-semibold text-sm">Sort By</h3>
+            <h3 className="font-semibold text-sm text-muted-foreground">Sort By</h3>
              <Select value={sortOption} onValueChange={setSortOption}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-background/70">
                   <SelectValue placeholder="Relevance" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="recent">Most Recent</SelectItem>
                   <SelectItem value="popular">Most Popular</SelectItem>
                   <SelectItem value="price-asc">Price: Low to High</SelectItem>
                   <SelectItem value="price-desc">Price: High to Low</SelectItem>
@@ -122,31 +122,26 @@ export default function MarketplacePage() {
           <Button
             variant="ghost"
             onClick={clearFilters}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground justify-center"
           >
             <XCircle className="h-4 w-4" />
             Clear All Filters
           </Button>
-        </aside> */}
+        </aside>
 
         {/* Main Content */}
         <main>
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
-                <p className="text-muted-foreground">Browse and purchase datasets from the community.</p>
-            </div>
-          
           {filteredDatasets.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredDatasets.map((dataset) => (
-                <Card key={dataset.id} className="flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
+                <Card key={dataset.id} className="flex flex-col transition-all hover:shadow-lg hover:-translate-y-1 bg-card/60 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
                     <CardHeader>
                         <CardTitle className="text-lg">{dataset.name}</CardTitle>
-                        <CardDescription className="line-clamp-2">{dataset.description}</CardDescription>
+                        <CardDescription className="line-clamp-2 h-10">{dataset.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow grid gap-4">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Tag className="h-4 w-4"/>
+                            <Tag className="h-4 w-4 text-primary"/>
                             <Badge variant="outline">{dataset.category}</Badge>
                         </div>
                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -156,11 +151,11 @@ export default function MarketplacePage() {
                     </CardContent>
                     <Separator />
                     <CardFooter className="flex justify-between items-center pt-4">
-                         <div className="flex items-center gap-2 font-semibold text-primary">
-                            <CircleDollarSign className="h-5 w-5" /> 
-                            <span className="text-lg">{dataset.price > 0 ? dataset.price : 'Not Set'}</span>
+                         <div className="flex items-center gap-2 font-semibold text-foreground">
+                            <Coins className="h-5 w-5 text-primary" /> 
+                            <span className="text-lg">{dataset.price > 0 ? `${dataset.price} KAI` : 'Not Set'}</span>
                         </div>
-                         <Button asChild size="sm" className="bg-gradient-to-r from-[#007BFF] to-[#00BFFF] text-white hover:scale-105 transition-transform">
+                         <Button asChild size="sm" className="bg-primary/90 text-primary-foreground hover:bg-primary hover:scale-105 transition-transform rounded-lg">
                             <Link href={`/marketplace/${dataset.id}`}>View</Link>
                         </Button>
                     </CardFooter>

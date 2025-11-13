@@ -1,4 +1,3 @@
-
 "use client"
 
 import { AppShell } from '@/components/layout/app-shell';
@@ -103,11 +102,7 @@ export default function UploadDataPage() {
 
   return (
     <AppShell>
-       <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Submit Data for Approval</h1>
-            <p className="text-muted-foreground">Upload your data to Walrus and create a DAO proposal to add it to the marketplace.</p>
-        </div>
-      <Card className="max-w-3xl mx-auto">
+      <Card className="max-w-3xl mx-auto bg-card/60 backdrop-blur-sm border border-border/50 rounded-2xl">
         <CardHeader>
           <CardTitle>Contribute Your Data</CardTitle>
           <CardDescription>
@@ -124,6 +119,7 @@ export default function UploadDataPage() {
                 value={datasetName}
                 onChange={(e) => setDatasetName(e.target.value)}
                 required
+                className="bg-background/70"
               />
             </div>
             <div className="grid gap-2">
@@ -134,12 +130,13 @@ export default function UploadDataPage() {
                 value={datasetDescription}
                 onChange={(e) => setDatasetDescription(e.target.value)}
                 required
+                className="bg-background/70"
               />
             </div>
              <div className="grid gap-2">
                 <Label htmlFor="file-upload">Upload Data File (Encrypted)</Label>
                 <div className="flex items-center justify-center w-full">
-                    <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors">
+                    <Label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background/50 hover:bg-muted/50 transition-colors">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
                             {file ? (

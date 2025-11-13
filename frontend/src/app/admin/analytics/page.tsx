@@ -42,12 +42,8 @@ const transactionChartConfig = { transactions: { label: "Transactions", color: "
 export default function AnalyticsPage() {
   return (
     <AppShell>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Admin Analytics & Management</h1>
-        <p className="text-muted-foreground">DAO-wide metrics, token stats, and access logs.</p>
-      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm rounded-2xl border-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -57,7 +53,7 @@ export default function AnalyticsPage() {
               <p className="text-xs text-muted-foreground">+15.2% this month</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm rounded-2xl border-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Tokens in Circulation</CardTitle>
               <Coins className="h-4 w-4 text-muted-foreground" />
@@ -67,7 +63,7 @@ export default function AnalyticsPage() {
                <p className="text-xs text-muted-foreground">KAI</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-card/60 backdrop-blur-sm rounded-2xl border-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Daily Transactions</CardTitle>
               <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
@@ -79,7 +75,7 @@ export default function AnalyticsPage() {
           </Card>
         </div>
         <div className="mt-8 grid gap-8 md:grid-cols-2">
-            <Card>
+            <Card className="bg-card/60 backdrop-blur-sm rounded-2xl border-border/50">
                 <CardHeader>
                     <CardTitle>User Growth</CardTitle>
                     <CardDescription>Total users in the DAO over time.</CardDescription>
@@ -101,7 +97,7 @@ export default function AnalyticsPage() {
                     </ChartContainer>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card/60 backdrop-blur-sm rounded-2xl border-border/50">
                 <CardHeader>
                     <CardTitle>Transaction Volume</CardTitle>
                     <CardDescription>Number of transactions per day.</CardDescription>
@@ -126,7 +122,7 @@ export default function AnalyticsPage() {
             </Card>
         </div>
          <div className="mt-8">
-            <Card>
+            <Card className="bg-card/60 backdrop-blur-sm rounded-2xl border-border/50">
                 <CardHeader>
                     <CardTitle>Recent Activity Logs</CardTitle>
                     <CardDescription>A live feed of important actions within the DAO.</CardDescription>
@@ -143,7 +139,7 @@ export default function AnalyticsPage() {
                         </TableHeader>
                         <TableBody>
                            {accessLogs.map(log => (
-                               <TableRow key={log.id}>
+                               <TableRow key={log.id} className="hover:bg-muted/30">
                                    <TableCell className="font-mono text-xs">{log.user}</TableCell>
                                    <TableCell>
                                        <Badge variant={

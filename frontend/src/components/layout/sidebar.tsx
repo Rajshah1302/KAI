@@ -2,18 +2,25 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogIn, X, Menu } from 'lucide-react';
+import { LogIn, X, Menu, LayoutDashboard, Store, Database, Landmark, CircleDollarSign, ShieldQuestion, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import logo from '@/public/logo.png';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const navLinks = [
-  { href: '/marketplace', label: 'Marketplace' },
-  { href: '/contribute/upload', label: 'Contribute' },
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/tokenomics', label: 'Tokenomics' },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/marketplace', label: 'Marketplace', icon: Store },
+  { href: '/contribute/upload', label: 'Contribute', icon: Database },
+  { href: '/governance', label: 'Governance', icon: Landmark },
+  { href: '/tokenomics', label: 'Tokenomics', icon: CircleDollarSign },
 ];
+
+const secondaryNavLinks = [
+    { href: '/admin/analytics', label: 'Admin', icon: ShieldQuestion },
+    { href: '#', label: 'Settings', icon: Settings },
+]
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -25,7 +32,7 @@ export function Sidebar() {
       <Button
         variant="outline"
         size="icon"
-        className="fixed top-0 left-4 z-50 md:hidden border-blue-200 text-[#002B5B] bg-white shadow-md"
+        className="fixed top-4 left-4 z-[60] md:hidden bg-background/50 backdrop-blur-sm"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -35,43 +42,70 @@ export function Sidebar() {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-screen w-64 bg-white/95 backdrop-blur-md border-r border-blue-100 shadow-lg transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        }`}
+        className={cn(
+            "fixed top-0 left-0 z-50 h-screen w-64 bg-card/60 backdrop-blur-lg border-r border-border/50 shadow-lg transition-transform duration-300 ease-in-out",
+            isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-blue-100">
+          <div className="p-4 border-b border-border/50 h-20 flex items-center">
             <Link href="/" className="flex items-center gap-3" onClick={() => setIsOpen(false)}>
               <Image src={logo} height={40} width={40} alt="Kai Logo" />
-              <span className="font-bold text-2xl text-[#002B5B]">Kai</span>
+              <span className="font-bold text-2xl text-foreground">Kai</span>
             </Link>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-1">
             {navLinks.map(link => {
               const isActive =
-                pathname === link.href || pathname.startsWith(`${link.href}/`);
+                (link.href === '/dashboard' && pathname === link.href) ||
+                (link.href !== '/dashboard' && pathname.startsWith(link.href));
 
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-gradient-to-r from-[#007BFF]/10 to-[#00BFFF]/10 text-[#007BFF] border-l-4 border-[#007BFF]'
-                      : 'text-[#002B5B] hover:bg-blue-50 hover:text-[#007BFF]'
-                  }`}
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  )}
                 >
+                  <link.icon className="h-5 w-5"/>
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Secondary Nav */}
+          <nav className="p-4 space-y-1 border-t border-border/50">
+             {secondaryNavLinks.map(link => {
+              const isActive = pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                    isActive
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  )}
+                >
+                  <link.icon className="h-5 w-5"/>
                   {link.label}
                 </Link>
               );
@@ -79,11 +113,8 @@ export function Sidebar() {
           </nav>
 
           {/* Wallet Connect Button */}
-          <div className="p-4 border-t border-blue-100">
-            <Button
-              asChild
-              className="w-full bg-gradient-to-r from-[#007BFF] to-[#00BFFF] text-white hover:from-[#0066d1] hover:to-[#00a0e0] transition-all duration-200"
-            >
+          <div className="p-4 border-t border-border/50">
+            <Button asChild className="w-full">
               <Link href="/auth/wallet-connect" onClick={() => setIsOpen(false)}>
                 <LogIn className="mr-2 h-4 w-4" /> Connect Wallet
               </Link>
@@ -91,9 +122,6 @@ export function Sidebar() {
           </div>
         </div>
       </aside>
-
-      {/* Spacer for desktop to prevent content from going under sidebar */}
-      <div className="hidden md:block w-64" />
     </>
   );
 }

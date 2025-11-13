@@ -6,19 +6,16 @@ import {
   FileText,
   CircleDollarSign,
   Coins,
-  PlusCircle,
-  ThumbsDown,
-  ThumbsUp,
-  Eye,
-  Clock,
-  Store,
+  PiggyBank,
+  RefreshCw,
   Database,
   ChevronRight,
+  Store,
+  PlusCircle,
 } from "lucide-react";
-import { Header } from "@/components/layout/header";
+import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 
-// Sample data
 const chartData = [
   { month: "Jan", earnings: 186 },
   { month: "Feb", earnings: 305 },
@@ -28,322 +25,178 @@ const chartData = [
   { month: "Jun", earnings: 420 },
 ];
 
-const defaultProposals = [
-  {
-    id: 1,
-    title: 'Approve new dataset: "NYC Taxi Rides"',
-    status: "Active",
-    type: "Dataset Approval",
-    votes_for: 72,
-    votes_against: 8,
-    end_date: "3 days remaining",
-  },
-  {
-    id: 2,
-    title: 'Create new category: "Geospatial Data"',
-    status: "Passed",
-    type: "Category Creation",
-    votes_for: 88,
-    votes_against: 12,
-    end_date: "Ended 2 weeks ago",
-  },
-  {
-    id: 4,
-    title: 'Set price for "Medical Imaging Scans"',
-    status: "Active",
-    type: "Pricing",
-    votes_for: 34,
-    votes_against: 16,
-    end_date: "1 day remaining",
-  },
-  {
-    id: 3,
-    title: "Update DAO governance charter",
-    status: "Failed",
-    type: "Governance",
-    votes_for: 40,
-    votes_against: 60,
-    end_date: "Ended 1 month ago",
-  },
-];
-
 export default function DashboardPage() {
-  const username = "Raj.sui";
-  const [proposals, setProposals] = useState(defaultProposals);
-
-  function handleVote(proposalId: number, type: string) {
-    setProposals((prev) =>
-      prev.map((p) =>
-        p.id === proposalId
-          ? {
-              ...p,
-              votes_for: type === "yes" ? p.votes_for + 1 : p.votes_for,
-              votes_against:
-                type === "no" ? p.votes_against + 1 : p.votes_against,
-            }
-          : p
-      )
-    );
-  }
-
   const maxEarnings = Math.max(...chartData.map((d) => d.earnings));
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-blue-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
-                  <CircleDollarSign className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-sm text-green-600 font-medium">
-                  +20.1%
-                </span>
+      <div className="max-w-7xl mx-auto">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-sm hover:shadow-lg transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/80 to-primary/50 flex items-center justify-center">
+                <CircleDollarSign className="h-6 w-6 text-primary-foreground" />
               </div>
-              <div className="text-3xl font-semibold text-slate-800 mb-1">
-                1,250 KAI
-              </div>
-              <div className="text-sm text-slate-500">Total Earnings</div>
+              <span className="text-sm text-green-600 font-medium">
+                +20.1%
+              </span>
             </div>
-
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-blue-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center">
-                  <Coins className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-sm text-slate-400 font-medium">
-                  Staked: 2K
-                </span>
-              </div>
-              <div className="text-3xl font-semibold text-slate-800 mb-1">
-                5,000 KAI
-              </div>
-              <div className="text-sm text-slate-500">Token Balance</div>
+            <div className="text-3xl font-semibold text-foreground mb-1">
+              1,250 KAI
             </div>
-
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-blue-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-400 flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-sm text-green-600 font-medium">+2</span>
-              </div>
-              <div className="text-3xl font-semibold text-slate-800 mb-1">
-                12
-              </div>
-              <div className="text-sm text-slate-500">Contributions</div>
-            </div>
-
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-blue-100 hover:shadow-lg transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-400 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-white" />
-                </div>
-              </div>
-              <div className="text-3xl font-semibold text-slate-800 mb-1">
-                83.3%
-              </div>
-              <div className="text-sm text-slate-500">Approval Rate</div>
-            </div>
+            <div className="text-sm text-muted-foreground">Total Earnings</div>
           </div>
 
-          {/* Earnings Chart */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-blue-100 mb-12">
-            <div className="mb-8">
-              <h2 className="text-2xl font-medium text-slate-800 mb-2">
-                Earnings Trend
-              </h2>
-              <p className="text-slate-500">
-                Monthly KAI token earnings from contributions
-              </p>
+          <div className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-sm hover:shadow-lg transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
+                <Coins className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-sm text-muted-foreground font-medium">
+                Staked: 2K
+              </span>
             </div>
-
-            <div className="flex items-end justify-between h-64 gap-8">
-              {chartData.map((item, idx) => {
-                const height = (item.earnings / maxEarnings) * 100;
-                return (
-                  <div
-                    key={idx}
-                    className="flex-1 flex flex-col items-center gap-3"
-                  >
-                    <div className="w-full flex flex-col items-center justify-end h-full">
-                      <div className="text-sm font-medium text-slate-600 mb-2">
-                        {item.earnings}
-                      </div>
-                      <div
-                        className="w-full rounded-t-2xl bg-gradient-to-t from-blue-400 to-cyan-300 transition-all hover:from-blue-500 hover:to-cyan-400"
-                        style={{ height: `${height}%` }}
-                      />
-                    </div>
-                    <div className="text-sm text-slate-500 font-medium">
-                      {item.month}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="text-3xl font-semibold text-foreground mb-1">
+              5,000 KAI
             </div>
+            <div className="text-sm text-muted-foreground">Token Balance</div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <button className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-blue-100 hover:shadow-lg hover:border-blue-200 transition-all text-left group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
-                  <Store className="h-7 w-7 text-white" />
-                </div>
-                <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+          <div className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-sm hover:shadow-lg transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-400 to-green-400 flex items-center justify-center">
+                <FileText className="h-6 w-6 text-white" />
               </div>
-              <h3 className="text-xl font-medium text-slate-800 mb-1">
-                Marketplace
-              </h3>
-              <p className="text-slate-500">Explore and purchase datasets</p>
-            </button>
-
-            <button className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 border border-blue-100 hover:shadow-lg hover:border-blue-200 transition-all text-left group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-400 flex items-center justify-center">
-                  <Database className="h-7 w-7 text-white" />
-                </div>
-                <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
-              </div>
-              <h3 className="text-xl font-medium text-slate-800 mb-1">
-                Contribute Data
-              </h3>
-              <p className="text-slate-500">Upload datasets and earn KAI</p>
-            </button>
-
-            <button className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-3xl p-6 border border-blue-200 hover:shadow-lg transition-all text-left group">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <PlusCircle className="h-7 w-7 text-white" />
-                </div>
-                <ChevronRight className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
-              </div>
-              <h3 className="text-xl font-medium text-white mb-1">
-                Create Proposal
-              </h3>
-              <p className="text-blue-100">Start a governance vote</p>
-            </button>
+              <span className="text-sm text-green-600 font-medium">+2</span>
+            </div>
+            <div className="text-3xl font-semibold text-foreground mb-1">
+              12
+            </div>
+            <div className="text-sm text-muted-foreground">Contributions</div>
           </div>
 
-          {/* Governance Section */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-medium text-slate-800 mb-2">
-                  Governance
-                </h2>
-                <p className="text-slate-500 text-lg">
-                  Active proposals and voting
-                </p>
+          <div className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-sm hover:shadow-lg transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-white" />
               </div>
             </div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-              {proposals.map((proposal) => {
-                const totalVotes = proposal.votes_for + proposal.votes_against;
-                const forPercentage =
-                  totalVotes > 0 ? (proposal.votes_for / totalVotes) * 100 : 0;
-                const againstPercentage =
-                  totalVotes > 0
-                    ? (proposal.votes_against / totalVotes) * 100
-                    : 0;
-
-                return (
-                  <div
-                    key={proposal.id}
-                    className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-blue-100 hover:shadow-lg transition-all"
-                  >
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-medium text-slate-800 mb-2">
-                          {proposal.title}
-                        </h3>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
-                            {proposal.type}
-                          </span>
-                          <span className="text-xs text-slate-500 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {proposal.end_date}
-                          </span>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ml-4 ${
-                          proposal.status === "Active"
-                            ? "bg-green-100 text-green-700"
-                            : proposal.status === "Passed"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {proposal.status}
-                      </span>
-                    </div>
-
-                    {(proposal.status === "Active" ||
-                      proposal.status === "Passed" ||
-                      proposal.status === "Failed") && (
-                      <div className="mb-6">
-                        <div className="relative h-3 w-full rounded-full overflow-hidden bg-slate-100">
-                          <div
-                            className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-green-500"
-                            style={{ width: `${forPercentage}%` }}
-                          />
-                          <div
-                            className="absolute top-0 right-0 h-full bg-gradient-to-l from-red-400 to-red-500"
-                            style={{ width: `${againstPercentage}%` }}
-                          />
-                        </div>
-
-                        <div className="flex justify-between mt-3">
-                          <span className="text-sm font-medium text-green-600">
-                            Yes: {proposal.votes_for} (
-                            {forPercentage.toFixed(0)}
-                            %)
-                          </span>
-                          <span className="text-sm font-medium text-red-600">
-                            No: {proposal.votes_against} (
-                            {againstPercentage.toFixed(0)}%)
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex gap-3">
-                      {proposal.status === "Active" && (
-                        <>
-                          <button
-                            onClick={() => handleVote(proposal.id, "yes")}
-                            className="flex-1 py-3 px-4 rounded-2xl border-2 border-green-200 bg-green-50 hover:bg-green-100 text-green-700 font-medium transition-all flex items-center justify-center gap-2"
-                          >
-                            <ThumbsUp className="h-4 w-4" />
-                            Vote Yes
-                          </button>
-                          <button
-                            onClick={() => handleVote(proposal.id, "no")}
-                            className="flex-1 py-3 px-4 rounded-2xl border-2 border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-medium transition-all flex items-center justify-center gap-2"
-                          >
-                            <ThumbsDown className="h-4 w-4" />
-                            Vote No
-                          </button>
-                        </>
-                      )}
-                      <button className="py-3 px-4 rounded-2xl border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition-all flex items-center justify-center gap-2">
-                        <Eye className="h-4 w-4" />
-                        Details
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="text-3xl font-semibold text-foreground mb-1">
+              83.3%
             </div>
+            <div className="text-sm text-muted-foreground">Approval Rate</div>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            {/* Earnings Chart */}
+            <div className="lg:col-span-2 bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-sm">
+                <div className="mb-6">
+                <h2 className="text-xl font-medium text-foreground mb-1">
+                    Earnings Trend
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                    Monthly KAI token earnings from contributions
+                </p>
+                </div>
+
+                <div className="flex items-end justify-between h-64 gap-4">
+                {chartData.map((item, idx) => {
+                    const height = (item.earnings / maxEarnings) * 100;
+                    return (
+                    <div
+                        key={idx}
+                        className="flex-1 flex flex-col items-center gap-3 group"
+                    >
+                        <div className="w-full flex flex-col items-center justify-end h-full">
+                        <div className="text-xs font-medium text-muted-foreground mb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {item.earnings}
+                        </div>
+                        <div
+                            className="w-full rounded-t-lg bg-gradient-to-t from-primary/70 to-primary/40 transition-all group-hover:from-primary/80 group-hover:to-primary/50"
+                            style={{ height: `${height}%` }}
+                        />
+                        </div>
+                        <div className="text-sm text-muted-foreground font-medium">
+                        {item.month}
+                        </div>
+                    </div>
+                    );
+                })}
+                </div>
+            </div>
+            {/* Treasury Card */}
+            <div className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-sm flex flex-col justify-between">
+                 <div>
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                            <PiggyBank className="h-6 w-6 text-white" />
+                        </div>
+                        <h2 className="text-xl font-medium text-foreground">
+                            DAO Treasury
+                        </h2>
+                    </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground">Current Treasury Balance (SUI)</p>
+                        <p className="text-4xl font-bold flex items-center gap-2">
+                            250,000 SUI
+                        </p>
+                    </div>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2 mt-2">
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                        <span>+5.8% in last 30 days</span>
+                    </div>
+                </div>
+                 <button className="w-full mt-6 py-3 px-4 rounded-xl border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 text-primary font-medium transition-all flex items-center justify-center gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Burn KAI for SUI
+                 </button>
+            </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Link href="/marketplace" className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 hover:shadow-lg hover:border-primary/50 transition-all text-left group">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
+                    <Store className="h-7 w-7 text-white" />
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                <h3 className="text-xl font-medium text-foreground mb-1">
+                    Marketplace
+                </h3>
+                <p className="text-muted-foreground">Explore and purchase datasets</p>
+            </Link>
+
+            <Link href="/contribute/upload" className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 hover:shadow-lg hover:border-primary/50 transition-all text-left group">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-400 to-green-400 flex items-center justify-center">
+                    <Database className="h-7 w-7 text-white" />
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                <h3 className="text-xl font-medium text-foreground mb-1">
+                    Contribute Data
+                </h3>
+                <p className="text-muted-foreground">Upload datasets and earn KAI</p>
+            </Link>
+
+            <Link href="/governance/create" className="bg-gradient-to-br from-primary/80 to-purple-500/80 rounded-2xl p-6 border border-primary/50 hover:shadow-lg transition-all text-left group">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <PlusCircle className="h-7 w-7 text-white" />
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+                </div>
+                <h3 className="text-xl font-medium text-white mb-1">
+                    Create Proposal
+                </h3>
+                <p className="text-primary-foreground/80">Start a governance vote</p>
+            </Link>
+        </div>
+
       </div>
     </AppShell>
   );

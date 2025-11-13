@@ -76,7 +76,7 @@ export default function MarketplacePage() {
     <AppShell>
       <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
         {/* Left Sidebar for Filters */}
-        <aside className="hidden md:flex flex-col gap-6 sticky top-24">
+        {/* <aside className="hidden md:flex flex-col gap-6 sticky top-24">
           <h2 className="text-xl font-semibold">Filters</h2>
           
           <div className="relative">
@@ -127,7 +127,7 @@ export default function MarketplacePage() {
             <XCircle className="h-4 w-4" />
             Clear All Filters
           </Button>
-        </aside>
+        </aside> */}
 
         {/* Main Content */}
         <main>

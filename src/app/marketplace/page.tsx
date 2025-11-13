@@ -59,7 +59,7 @@ export default function MarketplacePage() {
         .includes(searchTerm.toLowerCase())
     );
 
-    if (category) {
+    if (category && category !== 'all') {
       result = result.filter(
         (d) => d.category.toLowerCase() === category.toLowerCase()
       );
@@ -96,7 +96,7 @@ export default function MarketplacePage() {
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {allCategories.map(cat => (
                     <SelectItem key={cat} value={cat.toLowerCase()}>{cat}</SelectItem>
                   ))}

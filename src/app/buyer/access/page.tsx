@@ -10,10 +10,11 @@ const purchasedDatasets = [
 
 export default function AccessPage() {
   return (
-    <AppShell
-      title="Access & Download"
-      description="View your purchased datasets and access decryption keys."
-    >
+    <AppShell>
+        <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Access & Download</h1>
+            <p className="text-muted-foreground">View your purchased datasets and access decryption keys.</p>
+        </div>
         <div className="grid gap-4">
             {purchasedDatasets.map(dataset => (
                 <Card key={dataset.id}>

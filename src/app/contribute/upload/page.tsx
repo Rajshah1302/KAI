@@ -102,10 +102,11 @@ export default function UploadDataPage() {
   };
 
   return (
-    <AppShell
-      title="Submit Data for Approval"
-      description="Upload your data to Walrus and create a DAO proposal to add it to the marketplace."
-    >
+    <AppShell>
+       <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Submit Data for Approval</h1>
+            <p className="text-muted-foreground">Upload your data to Walrus and create a DAO proposal to add it to the marketplace.</p>
+        </div>
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle>Contribute Your Data</CardTitle>

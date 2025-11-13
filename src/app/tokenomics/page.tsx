@@ -51,10 +51,11 @@ const tokenUtilities = [
 
 export default function TokenomicsPage() {
   return (
-    <AppShell
-      title="KAI Tokenomics"
-      description="Understanding the economy of the Kaivalya DAO."
-    >
+    <AppShell>
+        <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">KAI Tokenomics</h1>
+            <p className="text-muted-foreground">Understanding the economy of the Kaivalya DAO.</p>
+        </div>
       <div className="grid gap-8 md:grid-cols-3">
          <Card className="md:col-span-1">
             <CardHeader>
@@ -76,7 +77,7 @@ export default function TokenomicsPage() {
                 </div>
                  <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Token Type</span>
-                    <span className="font-bold">ERC-20</span>
+                    <span className="font-bold">SUI</span>
                 </div>
             </CardContent>
         </Card>

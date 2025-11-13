@@ -61,7 +61,7 @@ export default function CreateProposalPage() {
         existingProposals.push(newProposal);
         localStorage.setItem('proposals', JSON.stringify(existingProposals));
         
-        router.push('/governance');
+        router.push('/dashboard');
       } catch (e) {
           console.error("Failed to save to local storage", e);
           toast({
@@ -80,10 +80,11 @@ export default function CreateProposalPage() {
   };
 
   return (
-    <AppShell
-      title="Create a New Proposal"
-      description="Propose a new action for the DAO to vote on."
-    >
+    <AppShell>
+        <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Create a New Proposal</h1>
+            <p className="text-muted-foreground">Propose a new action for the DAO to vote on.</p>
+        </div>
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle>Proposal Details</CardTitle>

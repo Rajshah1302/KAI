@@ -1,12 +1,15 @@
 "use client"
 
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { TrendingUp, FileText, CircleDollarSign, Coins } from "lucide-react";
+import { TrendingUp, FileText, CircleDollarSign, Coins, PlusCircle, ThumbsDown, ThumbsUp, Eye, Clock } from "lucide-react";
 
 const chartData = [
   { month: "Jan", earnings: 186 },
@@ -32,12 +35,39 @@ const contributionHistory = [
     {id: 5, dataset: "Autonomous Vehicle Sensor Data", date: "2024-02-18", status: "Rejected", earnings: "-"},
 ];
 
+const defaultProposals = [
+    { id: 1, title: 'Approve new dataset: "NYC Taxi Rides"', status: 'Active', type: 'Dataset Approval', votes_for: 72, votes_against: 8, end_date: '3 days remaining' },
+    { id: 2, title: 'Create new category: "Geospatial Data"', status: 'Passed', type: 'Category Creation', votes_for: 88, votes_against: 12, end_date: 'Ended 2 weeks ago' },
+    { id: 4, title: 'Set price for "Medical Imaging Scans"', status: 'Active', type: 'Pricing', votes_for: 34, votes_against: 16, end_date: '1 day remaining' },
+    { id: 3, title: 'Update DAO governance charter', status: 'Failed', type: 'Governance', votes_for: 40, votes_against: 60, end_date: 'Ended 1 month ago' },
+];
+
 export default function DashboardPage() {
+  const [proposals, setProposals] = useState(defaultProposals);
+
+  useEffect(() => {
+    try {
+      const storedProposals = JSON.parse(localStorage.getItem('proposals') || '[]');
+      const combined = [...defaultProposals];
+      const storedIds = new Set(combined.map(p => p.id));
+      for (const stored of storedProposals) {
+        if (!storedIds.has(stored.id)) {
+          combined.push(stored);
+        }
+      }
+      setProposals(combined);
+    } catch (e) {
+      console.error("Could not load proposals from local storage", e);
+      setProposals(defaultProposals);
+    }
+  }, []);
+
   return (
-    <AppShell
-      title="Contributor Dashboard"
-      description="Track your data contributions, token balance, and earnings."
-    >
+    <AppShell>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Contributor Dashboard</h1>
+          <p className="text-muted-foreground">Track your data contributions, token balance, and earnings.</p>
+        </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -158,6 +188,95 @@ export default function DashboardPage() {
                     </Table>
                 </CardContent>
             </Card>
+        </div>
+
+        <div className="mt-8">
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight">Governance & Proposals</h2>
+                    <p className="text-muted-foreground">Vote on dataset approvals, category creation, pricing, and other DAO matters.</p>
+                </div>
+                <Button asChild>
+                    <Link href="/governance/create">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Create New Proposal
+                    </Link>
+                </Button>
+              </div>
+              <div className="grid gap-6">
+                {proposals.map((proposal) => {
+                    const totalVotes = proposal.votes_for + proposal.votes_against;
+                    const forPercentage = totalVotes > 0 ? (proposal.votes_for / totalVotes) * 100 : 0;
+                    const againstPercentage = totalVotes > 0 ? (proposal.votes_against / totalVotes) * 100 : 0;
+
+                    const getStatusClasses = () => {
+                        switch (proposal.status) {
+                            case 'Active': return { badge: 'default', border: 'border-primary', iconColor: 'text-primary' };
+                            case 'Passed': return { badge: 'default', border: 'border-green-600', iconColor: 'text-green-600' };
+                            case 'Failed': return { badge: 'destructive', border: 'border-red-600', iconColor: 'text-red-600' };
+                            default: return { badge: 'secondary', border: 'border-border', iconColor: 'text-muted-foreground' };
+                        }
+                    }
+
+                    const { border, iconColor } = getStatusClasses();
+                    
+                    const getBadgeClass = () => {
+                        switch(proposal.status) {
+                            case 'Passed': return 'bg-green-600 hover:bg-green-700';
+                            case 'Failed': return 'bg-red-600';
+                            case 'Active': return 'bg-primary hover:bg-primary/80';
+                            default: return 'bg-gray-500';
+                        }
+                    }
+
+                    return (
+                      <Card key={proposal.id} className={`transition-all hover:shadow-md ${border}`}>
+                        <CardHeader>
+                          <div className="flex justify-between items-start gap-4">
+                            <CardTitle className="text-lg font-semibold">{proposal.title}</CardTitle>
+                            <Badge className={getBadgeClass()}>{proposal.status}</Badge>
+                          </div>
+                          <CardDescription className="flex items-center gap-4 text-xs pt-1">
+                              <Badge variant="outline">{proposal.type}</Badge>
+                              <div className={`flex items-center gap-1.5 ${iconColor}`}>
+                                <Clock className="h-3 w-3" />
+                                <span>{proposal.end_date}</span>
+                              </div>
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid gap-4">
+                            {(proposal.status === 'Active' || proposal.status === 'Passed' || proposal.status === 'Failed') && (
+                                <div className="space-y-2">
+                                   <div className="relative h-3 w-full rounded-full overflow-hidden bg-secondary">
+                                        <div className="absolute top-0 left-0 h-full bg-green-500" style={{ width: `${forPercentage}%` }} />
+                                        <div className="absolute top-0 right-0 h-full bg-red-500" style={{ width: `${againstPercentage}%` }} />
+                                    </div>
+                                    <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                                        <span className="text-green-600">Yes: {proposal.votes_for} ({forPercentage.toFixed(1)}%)</span>
+                                        <span className="text-red-600">No: {proposal.votes_against} ({againstPercentage.toFixed(1)}%)</span>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex gap-2 flex-wrap items-center border-t pt-4 mt-2">
+                                {proposal.status === 'Active' && (
+                                  <>
+                                    <Button variant="outline" size="sm" className="hover:bg-green-100 dark:hover:bg-green-900/50 hover:text-green-800 border-green-300">
+                                        <ThumbsUp className="mr-2 h-4 w-4"/>Vote Yes
+                                    </Button>
+                                    <Button variant="outline" size="sm" className="hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-800 border-red-300">
+                                        <ThumbsDown className="mr-2 h-4 w-4"/>Vote No
+                                    </Button>
+                                  </>
+                                )}
+                                <Button variant="ghost" size="sm" className="ml-auto">
+                                    <Eye className="mr-2 h-4 w-4"/>View Details
+                                </Button>
+                            </div>
+                        </CardContent>
+                      </Card>
+                    )
+                })}
+              </div>
         </div>
     </AppShell>
   );

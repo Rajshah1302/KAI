@@ -91,10 +91,11 @@ export default function DatasetDetailsPage({ params }: { params: { id: string } 
   };
 
   return (
-    <AppShell
-      title={dataset.name}
-      description={`Detailed view of the "${dataset.name}" dataset.`}
-    >
+    <AppShell>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">{dataset.name}</h1>
+        <p className="text-muted-foreground">{`Detailed view of the "${dataset.name}" dataset.`}</p>
+      </div>
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
             <Card>

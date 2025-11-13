@@ -41,10 +41,11 @@ const transactionChartConfig = { transactions: { label: "Transactions", color: "
 
 export default function AnalyticsPage() {
   return (
-    <AppShell
-      title="Admin Analytics & Management"
-      description="DAO-wide metrics, token stats, and access logs."
-    >
+    <AppShell>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Admin Analytics & Management</h1>
+        <p className="text-muted-foreground">DAO-wide metrics, token stats, and access logs.</p>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

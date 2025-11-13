@@ -5,10 +5,11 @@ import { Wallet, Fingerprint } from 'lucide-react';
 
 export default function WalletConnectPage() {
   return (
-    <AppShell
-      title="Connect Your Wallet"
-      description="Onboard with your wallet and decentralized identity."
-    >
+    <AppShell>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Connect Your Wallet</h1>
+        <p className="text-muted-foreground">Onboard with your wallet and decentralized identity.</p>
+      </div>
       <div className="flex justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">

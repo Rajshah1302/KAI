@@ -6,10 +6,11 @@ import { Coins, PiggyBank, Receipt, TrendingUp, RefreshCw } from 'lucide-react';
 
 export default function FinancePage() {
   return (
-    <AppShell
-      title="Treasury & Profit Sharing"
-      description="View DAO treasury details, manage KAI tokens, and redeem SUI."
-    >
+    <AppShell>
+        <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Treasury & Profit Sharing</h1>
+            <p className="text-muted-foreground">View DAO treasury details, manage KAI tokens, and redeem SUI.</p>
+        </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>

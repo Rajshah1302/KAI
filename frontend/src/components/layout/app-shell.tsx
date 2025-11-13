@@ -1,4 +1,4 @@
-'Use client';
+'use client';
 import { Sidebar } from "./sidebar";
 import { usePathname } from 'next/navigation';
 

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CircleDollarSign, Users, Search, XCircle, Tag, ArrowUp, ArrowDown } from 'lucide-react';
+import { CircleDollarSign, Users, Search, XCircle, Tag, ArrowUp, ArrowDown, Coins } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';

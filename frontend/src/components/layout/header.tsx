@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { WalletConnectButton } from '@/components/wallet/wallet-connect-button';
 import Image from 'next/image';
 import logo from '@/public/logo.png';
 
@@ -62,11 +62,7 @@ export function Header() {
 
         {/* Right: Wallet + Mobile */}
         <div className="flex items-center gap-3">
-          <Button asChild>
-            <Link href="/auth/wallet-connect">
-              <LogIn className="mr-2 h-4 w-4" /> Connect Wallet
-            </Link>
-          </Button>
+          <WalletConnectButton />
           <div className="md:hidden">
             <MobileNav pathname={pathname} />
           </div>

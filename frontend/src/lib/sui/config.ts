@@ -61,7 +61,7 @@ export const CONTRACT_ADDRESSES = {
   // Marketplace shared object ID
   MARKETPLACE_ID:  '0x14275541a3b71fbc0521cf0d118a4bbc7131be7aa06e7913bb99ca05e9d10cff',
   // KAI Coin type
-  KAI_COIN_TYPE: `0xad565ac9e3aa4ad896e39f279e5b014fedf9f5023dbda1fdecb4fe577e85f9fe::contract::KAI`,
+  KAI_COIN_TYPE: `${process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0xad565ac9e3aa4ad896e39f279e5b014fedf9f5023dbda1fdecb4fe577e85f9fe'}::kai::KAI`,
 } as const;
 
 // SuiNS Registry address

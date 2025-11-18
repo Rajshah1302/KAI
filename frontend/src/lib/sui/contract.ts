@@ -87,7 +87,9 @@ export interface Marketplace {
  * Validate kai addresses are configured
  */
 function validateContractAddresses() {
-  if (!CONTRACT_ADDRESSES.PACKAGE_ID || CONTRACT_ADDRESSES.PACKAGE_ID === '' || CONTRACT_ADDRESSES.PACKAGE_ID.startsWith('0x00000')) {
+  const packageId = CONTRACT_ADDRESSES.PACKAGE_ID || process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '';
+  // Check if package ID is valid (not empty and not a placeholder)
+  if (!packageId || packageId.length < 10 || packageId.startsWith('0x00000')) {
     throw new Error(
       'Contract package ID is not configured. Please set NEXT_PUBLIC_SUI_PACKAGE_ID in your .env.local file. ' +
       'See README_DEPLOYMENT.md for deployment instructions.'
@@ -109,10 +111,13 @@ export function buildPurchaseKaiTx(
   
   const [coin] = txb.splitCoins(txb.gas, [suiAmountMist]);
   
+  // Normalize the DAO ID address
+  const normalizedDaoId = normalizeSuiAddress(daoId);
+  
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.PURCHASE_KAI}`,
     arguments: [
-      txb.object(daoId),
+      txb.object(normalizedDaoId),
       coin,
     ],
   });
@@ -138,8 +143,8 @@ export function buildAddKaiTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.ADD_KAI}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(accountCapId),
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(accountCapId)),
       coin,
     ],
   });
@@ -164,8 +169,8 @@ export function buildBurnKaiTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.BURN_KAI}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(accountCapId),
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(accountCapId)),
       txb.pure.u64(kaiAmountMist),
     ],
   });
@@ -192,12 +197,12 @@ export function buildProposeCategoryTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.PROPOSE_CATEGORY}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(accountCapId),
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(accountCapId)),
       txb.pure.string(name),
       txb.pure.string(description),
       txb.pure.u64(rewardAmountMist),
-      txb.object(clockId),
+      txb.object(normalizeSuiAddress(clockId)),
     ],
   });
 
@@ -221,11 +226,11 @@ export function buildSubmitDataTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.SUBMIT_DATA}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(categoryId), // Category object reference
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(categoryId)), // Category object reference
       txb.pure.string(walrusBlobId),
       txb.pure.string(metadata),
-      txb.object(clockId),
+      txb.object(normalizeSuiAddress(clockId)),
     ],
   });
 
@@ -247,10 +252,10 @@ export function buildVoteTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.VOTE}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(accountCapId),
-      txb.object(proposalId),
-      txb.object(clockId),
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(accountCapId)),
+      txb.object(normalizeSuiAddress(proposalId)),
+      txb.object(normalizeSuiAddress(clockId)),
     ],
   });
 
@@ -275,11 +280,11 @@ export function buildProposePriceTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.PROPOSE_PRICE}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(accountCapId),
-      txb.pure.id(submissionId),
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(accountCapId)),
+      txb.pure.id(normalizeSuiAddress(submissionId)),
       txb.pure.u64(priceMist),
-      txb.object(clockId),
+      txb.object(normalizeSuiAddress(clockId)),
     ],
   });
 
@@ -304,8 +309,8 @@ export function buildPurchaseDataTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.PURCHASE_DATA}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(submissionId),
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(submissionId)),
       coin,
     ],
   });
@@ -327,9 +332,9 @@ export function buildExecuteCategoryProposalTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.EXECUTE_CATEGORY_PROPOSAL}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(proposalId),
-      txb.object(clockId),
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(proposalId)),
+      txb.object(normalizeSuiAddress(clockId)),
     ],
   });
 
@@ -352,11 +357,11 @@ export function buildExecuteDataProposalTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.EXECUTE_DATA_PROPOSAL}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(proposalId),
-      txb.object(submissionId),
-      txb.object(categoryId),
-      txb.object(clockId),
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(proposalId)),
+      txb.object(normalizeSuiAddress(submissionId)),
+      txb.object(normalizeSuiAddress(categoryId)),
+      txb.object(normalizeSuiAddress(clockId)),
     ],
   });
 
@@ -379,11 +384,11 @@ export function buildExecutePriceProposalTx(
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.EXECUTE_PRICE_PROPOSAL}`,
     arguments: [
-      txb.object(daoId),
-      txb.object(proposalId),
-      txb.object(submissionId),
-      txb.object(marketplaceId),
-      txb.object(clockId),
+      txb.object(normalizeSuiAddress(daoId)),
+      txb.object(normalizeSuiAddress(proposalId)),
+      txb.object(normalizeSuiAddress(submissionId)),
+      txb.object(normalizeSuiAddress(marketplaceId)),
+      txb.object(normalizeSuiAddress(clockId)),
     ],
   });
 

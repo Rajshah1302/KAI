@@ -55,13 +55,13 @@ export const CURRENT_NETWORK_CONFIG = NETWORK_CONFIGS[DEFAULT_NETWORK];
 // Contract addresses - these should be set after deployment
 export const CONTRACT_ADDRESSES = {
   // Main contract module address (set this after deployment)
-  PACKAGE_ID: process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '',
+  PACKAGE_ID:  '0xad565ac9e3aa4ad896e39f279e5b014fedf9f5023dbda1fdecb4fe577e85f9fe',
   // DataDAO shared object ID
-  DATA_DAO_ID: process.env.NEXT_PUBLIC_SUI_DATA_DAO_ID || '',
+  DATA_DAO_ID:  '0x0417758e231c61da4f26cd26276193efcdda10742e0b2ab308301710e9d4a4fc',
   // Marketplace shared object ID
-  MARKETPLACE_ID: process.env.NEXT_PUBLIC_SUI_MARKETPLACE_ID || '',
+  MARKETPLACE_ID:  '0x14275541a3b71fbc0521cf0d118a4bbc7131be7aa06e7913bb99ca05e9d10cff',
   // KAI Coin type
-  KAI_COIN_TYPE: `${process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || ''}::contract::KAI`,
+  KAI_COIN_TYPE: `0xad565ac9e3aa4ad896e39f279e5b014fedf9f5023dbda1fdecb4fe577e85f9fe::contract::KAI`,
 } as const;
 
 // SuiNS Registry address

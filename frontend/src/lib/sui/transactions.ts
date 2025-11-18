@@ -45,9 +45,12 @@ export async function estimateGas(
   signer: Signer
 ): Promise<bigint> {
   try {
+    // Get sender address for building
+    const senderAddress = await signer.getAddress();
+    
     // Build and simulate to get gas estimate
     const dryRunResult = await suiClient.dryRunTransactionBlock({
-      transactionBlock: await txb.build({ client: suiClient, signer }),
+      transactionBlock: await txb.build({ client: suiClient, sender: senderAddress }),
     });
 
     // Get gas budget from effects
@@ -78,8 +81,11 @@ export async function simulateTransaction(
   signer: Signer
 ): Promise<any> {
   try {
+    // Get sender address for building
+    const senderAddress = await signer.getAddress();
+    
     const dryRunResult = await suiClient.dryRunTransactionBlock({
-      transactionBlock: await txb.build({ client: suiClient, signer }),
+      transactionBlock: await txb.build({ client: suiClient, sender: senderAddress }),
     });
 
     // Check for errors
@@ -305,10 +311,11 @@ export function isTransactionSuccessful(result: TransactionResult): boolean {
 /**
  * Hook-friendly transaction executor
  * This is a utility that can be used within React hooks
+ * Updated to work with dapp-kit WalletWithRequiredFeatures
  */
 export async function executeTransactionWithFeedback(
   txb: TransactionBlock,
-  signer: Signer,
+  wallet: any, // WalletWithRequiredFeatures from dapp-kit
   options: TransactionOptions & {
     onSuccess?: (result: TransactionResult) => void;
     onError?: (error: string) => void;
@@ -318,6 +325,23 @@ export async function executeTransactionWithFeedback(
   const { onSuccess, onError, toast, ...txOptions } = options;
 
   try {
+    // Get account address from wallet
+    const account = wallet?.accounts?.[0];
+    if (!account?.address) {
+      throw new Error('Wallet account not found');
+    }
+
+    // Set sender on transaction block
+    txb.setSender(account.address);
+
+    // Create a wallet signer adapter
+    const signer = {
+      getAddress: async () => account.address,
+      signAndExecuteTransactionBlock: async (params: any) => {
+        return wallet.signAndExecuteTransactionBlock(params);
+      },
+    } as Signer;
+
     if (toast) {
       toast({
         title: 'Processing Transaction',

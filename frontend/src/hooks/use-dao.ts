@@ -9,7 +9,7 @@ import { useSuiClient } from '@mysten/dapp-kit';
 import { useCurrentWallet } from '@mysten/dapp-kit';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { useEffect, useState, useCallback } from 'react';
-import { CONTRACT_ADDRESSES, suiClient } from '@/lib/sui/config';
+import { CONTRACT_ADDRESSES, CURRENT_NETWORK_CONFIG } from '@/lib/sui/config';
 import {
   DataDAO,
   AccountCap,
@@ -46,7 +46,7 @@ export function useDao(daoId?: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const targetDaoId = daoId || CONTRACT_ADDRESSES.DATA_DAO_ID;
+  const targetDaoId = "0x0417758e231c61da4f26cd26276193efcdda10742e0b2ab308301710e9d4a4fc" || CONTRACT_ADDRESSES.DATA_DAO_ID;
 
   useEffect(() => {
     if (!targetDaoId) {
@@ -103,8 +103,8 @@ export function useAccountCap(daoId?: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const targetDaoId = daoId || CONTRACT_ADDRESSES.DATA_DAO_ID;
-  const address = wallet?.accounts[0]?.address;
+  const targetDaoId = "0x0417758e231c61da4f26cd26276193efcdda10742e0b2ab308301710e9d4a4fc" || CONTRACT_ADDRESSES.DATA_DAO_ID;
+  const address = wallet?.currentWallet?.accounts?.[0]?.address;
 
   useEffect(() => {
     if (!address || !targetDaoId) {
@@ -116,37 +116,51 @@ export function useAccountCap(daoId?: string) {
     setIsLoading(true);
     setError(null);
 
-    // Find AccountCap owned by user
-    client
-      .getOwnedObjects({
-        owner: address,
-        filter: {
-          StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::contract::AccountCap`,
-        },
-        options: {
-          showContent: true,
-        },
-      })
-      .then((objects) => {
-        // Find AccountCap that matches this DAO
-        const cap = objects.data.find((obj) => {
-          if (obj.data?.content && 'fields' in obj.data.content) {
-            const fields = obj.data.content.fields as any;
-            return fields.dao_id === targetDaoId;
-          }
-          return false;
-        });
+    // Query for AccountCap owned by user
+    const rpcUrl = CURRENT_NETWORK_CONFIG.fullnodeUrl;
 
-        if (cap?.data?.content && 'fields' in cap.data.content) {
-          const fields = cap.data.content.fields as any;
-          setAccountCap({
-            id: cap.data.objectId,
-            daoId: fields.dao_id,
-            kaiBalance: fields.kai_balance || '0',
-          });
-        } else {
-          setAccountCap(null);
+    fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'suix_getOwnedObjects',
+        params: [
+          address,
+          {
+            filter: {
+              StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::contract::AccountCap`,
+            },
+            options: {
+              showContent: true,
+            },
+          },
+          null, // cursor
+          10, // limit
+        ],
+      }),
+    })
+      .then((res) => res.json())
+      .then((data: any) => {
+        if (data.error) {
+          throw new Error(data.error.message || 'Query failed');
         }
+
+        const objects = data.result?.data || [];
+        const caps = objects
+          .filter((obj: any) => obj.data?.content && 'fields' in obj.data.content)
+          .map((obj: any) => {
+            const fields = obj.data.content.fields as any;
+            return {
+              id: obj.data.objectId,
+              daoId: fields.dao_id,
+              kaiBalance: String(fields.kai_balance || '0'),
+            };
+          })
+          .filter((cap: AccountCap) => cap.daoId === targetDaoId);
+
+        setAccountCap(caps.length > 0 ? caps[0] : null);
       })
       .catch((err) => {
         console.error('Failed to fetch AccountCap:', err);
@@ -170,7 +184,7 @@ export function useProposals(daoId?: string, limit: number = 50) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const targetDaoId = daoId || CONTRACT_ADDRESSES.DATA_DAO_ID;
+  const targetDaoId = "0x0417758e231c61da4f26cd26276193efcdda10742e0b2ab308301710e9d4a4fc" || CONTRACT_ADDRESSES.DATA_DAO_ID;
 
   useEffect(() => {
     if (!targetDaoId) {
@@ -182,31 +196,67 @@ export function useProposals(daoId?: string, limit: number = 50) {
     setIsLoading(true);
     setError(null);
 
-    // Query for Proposal objects
-    client
-      .queryObjects({
-        filter: {
-          StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::contract::Proposal`,
-        },
-        options: {
-          showContent: true,
-          showOwner: true,
-        },
-        limit,
-      })
-      .then((result) => {
-        const parsedProposals: Proposal[] = result.data
-          .filter((obj) => obj.data?.content && 'fields' in obj.data.content)
-          .map((obj) => {
-            const fields = obj.data!.content! as any;
+    // Query for Proposal objects using RPC
+    const rpcUrl = CURRENT_NETWORK_CONFIG.fullnodeUrl;
+
+    fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'suix_queryObjects',
+        params: [
+          {
+            filter: {
+              StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::contract::Proposal`,
+            },
+            options: {
+              showContent: true,
+              showOwner: true,
+            },
+          },
+          null, // cursor
+          limit, // limit
+          false, // descending order
+        ],
+      }),
+    })
+      .then((res) => res.json())
+      .then((data: any) => {
+        if (data.error) {
+          throw new Error(data.error.message || 'Query failed');
+        }
+
+        const objects = data.result?.data || [];
+        const parsedProposals: Proposal[] = objects
+          .filter((obj: any) => obj.data?.content && 'fields' in obj.data.content)
+          .map((obj: any) => {
+            const fields = obj.data.content.fields as any;
+            
+            // Handle data field - it's a vector<u8> which can come as:
+            // - base64 string in JSON
+            // - array of numbers [1, 2, 3...]
+            let dataField = '';
+            if (fields.data) {
+              if (typeof fields.data === 'string') {
+                // Already a string - could be base64 or raw
+                dataField = fields.data;
+              } else if (Array.isArray(fields.data)) {
+                // Array of bytes - convert to base64
+                const bytes = Uint8Array.from(fields.data);
+                dataField = btoa(String.fromCharCode(...bytes));
+              }
+            }
+            
             return {
-              id: obj.data!.objectId,
+              id: obj.data.objectId,
               daoId: fields.dao_id,
-              proposalType: fields.proposal_type as ProposalType,
-              data: fields.data || '',
-              votes: fields.votes || '0',
+              proposalType: Number(fields.proposal_type) as ProposalType,
+              data: dataField,
+              votes: String(fields.votes || 0),
               voters: fields.voters || [],
-              ends: fields.ends || '0',
+              ends: String(fields.ends || 0),
               executed: fields.executed || false,
             };
           })
@@ -371,7 +421,7 @@ export function useSubmitData() {
     async (
       walrusBlobId: string,
       metadata: string,
-      categoryId: string,
+      categoryId: string, // Now expects category object ID
       daoId?: string
     ) => {
       if (!wallet?.isConnected || !wallet.currentWallet) {
@@ -389,7 +439,7 @@ export function useSubmitData() {
 
       try {
         const txb = new TransactionBlock();
-        buildSubmitDataTx(txb, targetDaoId, walrusBlobId, metadata, categoryId);
+        buildSubmitDataTx(txb, targetDaoId, categoryId, walrusBlobId, metadata);
 
         const result = await executeTransactionWithFeedback(
           txb,
@@ -400,7 +450,7 @@ export function useSubmitData() {
             onSuccess: () => {
               toast({
                 title: 'Data Submitted',
-                description: 'Your data submission is pending approval.',
+                description: 'Your data submission has been created and a proposal is pending DAO approval.',
               });
             },
           }
@@ -422,6 +472,154 @@ export function useSubmitData() {
   );
 
   return { submitData, isLoading };
+}
+
+/**
+ * Hook to add KAI to existing account
+ */
+export function useAddKai() {
+  const wallet = useCurrentWallet();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const addKai = useCallback(
+    async (
+      daoId: string,
+      accountCapId: string,
+      suiAmount: string,
+      daoIdParam?: string
+    ) => {
+      if (!wallet?.isConnected || !wallet.currentWallet) {
+        toast({
+          title: 'Wallet Not Connected',
+          description: 'Please connect your wallet first.',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      const targetDaoId = daoIdParam || CONTRACT_ADDRESSES.DATA_DAO_ID;
+
+      if (!accountCapId) {
+        toast({
+          title: 'Account Required',
+          description: 'You need an AccountCap to add KAI. Purchase KAI first to create an account.',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const txb = new TransactionBlock();
+        buildAddKaiTx(txb, targetDaoId, accountCapId, suiAmount);
+
+        const result = await executeTransactionWithFeedback(
+          txb,
+          wallet.currentWallet,
+          {
+            simulate: true,
+            toast,
+            onSuccess: () => {
+              toast({
+                title: 'KAI Added',
+                description: `Successfully added KAI tokens to your account.`,
+              });
+            },
+          }
+        );
+
+        return result;
+      } catch (error: any) {
+        toast({
+          title: 'Add Failed',
+          description: error.message || 'Failed to add KAI tokens.',
+          variant: 'destructive',
+        });
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [wallet, toast]
+  );
+
+  return { addKai, isLoading };
+}
+
+/**
+ * Hook to burn KAI and redeem SUI
+ */
+export function useBurnKai() {
+  const wallet = useCurrentWallet();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const burnKai = useCallback(
+    async (
+      daoId: string,
+      accountCapId: string,
+      kaiAmount: string,
+      daoIdParam?: string
+    ) => {
+      if (!wallet?.isConnected || !wallet.currentWallet) {
+        toast({
+          title: 'Wallet Not Connected',
+          description: 'Please connect your wallet first.',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      const targetDaoId = daoIdParam || CONTRACT_ADDRESSES.DATA_DAO_ID;
+
+      if (!accountCapId) {
+        toast({
+          title: 'Account Required',
+          description: 'You need an AccountCap to burn KAI.',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const txb = new TransactionBlock();
+        buildBurnKaiTx(txb, targetDaoId, accountCapId, kaiAmount, 6);
+
+        const result = await executeTransactionWithFeedback(
+          txb,
+          wallet.currentWallet,
+          {
+            simulate: true,
+            toast,
+            onSuccess: () => {
+              toast({
+                title: 'KAI Burned',
+                description: `Successfully burned KAI tokens and redeemed SUI.`,
+              });
+            },
+          }
+        );
+
+        return result;
+      } catch (error: any) {
+        toast({
+          title: 'Burn Failed',
+          description: error.message || 'Failed to burn KAI tokens.',
+          variant: 'destructive',
+        });
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [wallet, toast]
+  );
+
+  return { burnKai, isLoading };
 }
 
 /**
@@ -508,3 +706,189 @@ export function useProposeCategory() {
   return { proposeCategory, isLoading };
 }
 
+/**
+ * Hook to execute a category proposal
+ */
+export function useExecuteCategoryProposal() {
+  const wallet = useCurrentWallet();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const executeProposal = useCallback(
+    async (
+      daoId: string,
+      proposalId: string,
+      clockId: string = '0x6'
+    ) => {
+      if (!wallet?.isConnected || !wallet.currentWallet) {
+        toast({
+          title: 'Wallet Not Connected',
+          description: 'Please connect your wallet first.',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const txb = new TransactionBlock();
+        buildExecuteCategoryProposalTx(txb, daoId, proposalId, clockId);
+
+        const result = await executeTransactionWithFeedback(
+          txb,
+          wallet.currentWallet,
+          {
+            simulate: true,
+            toast,
+            onSuccess: () => {
+              toast({
+                title: 'Proposal Executed',
+                description: 'The category proposal has been executed successfully.',
+              });
+            },
+          }
+        );
+
+        return result;
+      } catch (error: any) {
+        toast({
+          title: 'Execution Failed',
+          description: error.message || 'Failed to execute proposal.',
+          variant: 'destructive',
+        });
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [wallet, toast]
+  );
+
+  return { executeProposal, isLoading };
+}
+
+/**
+ * Hook to execute a data proposal
+ */
+export function useExecuteDataProposal() {
+  const wallet = useCurrentWallet();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const executeProposal = useCallback(
+    async (
+      daoId: string,
+      proposalId: string,
+      clockId: string = '0x6'
+    ) => {
+      if (!wallet?.isConnected || !wallet.currentWallet) {
+        toast({
+          title: 'Wallet Not Connected',
+          description: 'Please connect your wallet first.',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const txb = new TransactionBlock();
+        buildExecuteDataProposalTx(txb, daoId, proposalId, clockId);
+
+        const result = await executeTransactionWithFeedback(
+          txb,
+          wallet.currentWallet,
+          {
+            simulate: true,
+            toast,
+            onSuccess: () => {
+              toast({
+                title: 'Proposal Executed',
+                description: 'The data proposal has been executed successfully.',
+              });
+            },
+          }
+        );
+
+        return result;
+      } catch (error: any) {
+        toast({
+          title: 'Execution Failed',
+          description: error.message || 'Failed to execute proposal.',
+          variant: 'destructive',
+        });
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [wallet, toast]
+  );
+
+  return { executeProposal, isLoading };
+}
+
+/**
+ * Hook to execute a price proposal
+ */
+export function useExecutePriceProposal() {
+  const wallet = useCurrentWallet();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const executeProposal = useCallback(
+    async (
+      daoId: string,
+      proposalId: string,
+      marketplaceId: string,
+      clockId: string = '0x6'
+    ) => {
+      if (!wallet?.isConnected || !wallet.currentWallet) {
+        toast({
+          title: 'Wallet Not Connected',
+          description: 'Please connect your wallet first.',
+          variant: 'destructive',
+        });
+        return null;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const txb = new TransactionBlock();
+        buildExecutePriceProposalTx(txb, daoId, proposalId, marketplaceId, clockId);
+
+        const result = await executeTransactionWithFeedback(
+          txb,
+          wallet.currentWallet,
+          {
+            simulate: true,
+            toast,
+            onSuccess: () => {
+              toast({
+                title: 'Proposal Executed',
+                description: 'The price proposal has been executed successfully.',
+              });
+            },
+          }
+        );
+
+        return result;
+      } catch (error: any) {
+        toast({
+          title: 'Execution Failed',
+          description: error.message || 'Failed to execute proposal.',
+          variant: 'destructive',
+        });
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [wallet, toast]
+  );
+
+  return { executeProposal, isLoading };
+}

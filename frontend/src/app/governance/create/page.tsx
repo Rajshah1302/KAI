@@ -9,22 +9,57 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useLendingDataStorage } from '@/hooks/use-walrus';
+import { useProposeCategory, useAccountCap, useDao } from '@/hooks/use-dao';
+import { useSuiWallet } from '@/hooks/use-sui-wallet';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle, Wallet } from 'lucide-react';
+import { parseSuiAmount } from '@/lib/sui/config';
+import Link from 'next/link';
 
 export default function CreateProposalPage() {
-  const [title, setTitle] = useState('');
+  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState('');
+  const [rewardAmount, setRewardAmount] = useState('');
+  const [type, setType] = useState<'category' | ''>('');
   
   const router = useRouter();
-  const { storeLendingData, isLoading } = useLendingDataStorage();
+  const { proposeCategory, isLoading: proposing } = useProposeCategory();
+  const { accountCap, isLoading: loadingAccountCap } = useAccountCap();
+  const { dao, isLoading: loadingDao } = useDao();
+  const { isConnected } = useSuiWallet();
   const { toast } = useToast();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!title || !description || !type) {
+    
+    if (!isConnected) {
+      toast({
+        variant: 'destructive',
+        title: 'Wallet Not Connected',
+        description: 'Please connect your wallet to create a proposal.',
+      });
+      return;
+    }
+
+    if (!accountCap) {
+      toast({
+        variant: 'destructive',
+        title: 'Account Required',
+        description: 'You need an AccountCap to create proposals. Purchase KAI tokens first.',
+      });
+      return;
+    }
+
+    if (type !== 'category') {
+      toast({
+        variant: 'destructive',
+        title: 'Unsupported Type',
+        description: 'Only category proposals are supported at this time.',
+      });
+      return;
+    }
+
+    if (!name || !description || !rewardAmount) {
       toast({
         variant: 'destructive',
         title: 'Missing Information',
@@ -33,51 +68,54 @@ export default function CreateProposalPage() {
       return;
     }
 
-    const proposalData = {
-      title,
-      description,
-      type,
-      status: 'Active', // New proposals are active by default
-      votes_for: 0,
-      votes_against: 0,
-      end_date: '7 days remaining', // Mock end date
-    };
-
-    const result = await storeLendingData(proposalData);
-
-    if (result?.success && result.blobId) {
-      toast({
-        title: 'Proposal Submitted!',
-        description: 'Your proposal has been stored on Walrus and is now open for voting.',
-      });
-
-      try {
-        const existingProposals = JSON.parse(localStorage.getItem('proposals') || '[]');
-        const newProposal = {
-          ...proposalData,
-          id: result.blobId, // Use the blobId as the unique ID
-        };
-        
-        existingProposals.push(newProposal);
-        localStorage.setItem('proposals', JSON.stringify(existingProposals));
-        
-        router.push('/governance');
-      } catch (e) {
-          console.error("Failed to save to local storage", e);
-          toast({
-              variant: 'destructive',
-              title: 'Local Storage Error',
-              description: 'Could not save proposal to your browser\'s local storage.',
-          });
-      }
-    } else {
+    // Validate reward amount
+    const rewardInMist = parseSuiAmount(rewardAmount, 6);
+    if (rewardInMist <= 0) {
       toast({
         variant: 'destructive',
-        title: 'Submission Failed',
-        description: result?.error || 'Could not store proposal on Walrus. Please try again.',
+        title: 'Invalid Reward',
+        description: 'Reward amount must be greater than 0.',
       });
+      return;
+    }
+
+    if (!dao) {
+      toast({
+        variant: 'destructive',
+        title: 'DAO Not Loaded',
+        description: 'Failed to load DAO information. Please try again.',
+      });
+      return;
+    }
+
+    const result = await proposeCategory(
+      name,
+      description,
+      rewardInMist.toString(),
+      dao.id,
+      accountCap.id
+    );
+
+    if (result) {
+      toast({
+        title: 'Proposal Created!',
+        description: 'Your category proposal has been submitted to the blockchain.',
+      });
+      
+      // Clear form
+      setName('');
+      setDescription('');
+      setRewardAmount('');
+      setType('');
+      
+      // Navigate to governance page
+      setTimeout(() => {
+        router.push('/governance');
+      }, 1500);
     }
   };
+
+  const isLoading = proposing || loadingAccountCap || loadingDao;
 
   return (
     <AppShell>
@@ -85,55 +123,140 @@ export default function CreateProposalPage() {
         <CardHeader>
           <CardTitle>Create a New Proposal</CardTitle>
           <CardDescription>
-            Fill out the form below. Your proposal will be uploaded to Walrus and become visible on the governance page for voting.
+            Create a proposal to add a new data category to the DAO. You must have an AccountCap (purchase KAI tokens) to create proposals.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!isConnected && (
+            <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <div className="flex items-center gap-2 text-yellow-500 mb-2">
+                <Wallet className="h-5 w-5" />
+                <span className="font-medium">Wallet Not Connected</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Please connect your wallet to create a proposal.
+              </p>
+            </div>
+          )}
+
+          {isConnected && !accountCap && !loadingAccountCap && (
+            <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <div className="flex items-center gap-2 text-blue-500 mb-2">
+                <AlertCircle className="h-5 w-5" />
+                <span className="font-medium">Account Required</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                You need an AccountCap to create proposals. Purchase KAI tokens first.
+              </p>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/dashboard">
+                  Purchase KAI
+                </Link>
+              </Button>
+            </div>
+          )}
+
+          {isConnected && accountCap && (
+            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-green-500 mb-1">
+                    <span className="font-medium">Account Ready</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Your AccountCap: {accountCap.id.substring(0, 10)}...
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    KAI Balance: {parseFloat(accountCap.kaiBalance) / 1e6} KAI
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form className="grid gap-6" onSubmit={handleSubmit}>
             <div className="grid gap-2">
-              <Label htmlFor="proposal-title">Proposal Title</Label>
-              <Input
-                id="proposal-title"
-                placeholder="e.g., Create a 'Research' Data Category"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                className="bg-background/70"
-              />
+              <Label htmlFor="proposal-type">Proposal Type</Label>
+              <Select onValueChange={(value) => setType(value as 'category')} value={type} required>
+                <SelectTrigger id="proposal-type" className="bg-background/70">
+                  <SelectValue placeholder="Select a proposal type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="category">Category Creation</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Currently only category proposals are supported. More types coming soon.
+              </p>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="proposal-description">Description</Label>
-              <Textarea
-                id="proposal-description"
-                placeholder="Provide a detailed description of your proposal and its purpose..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                rows={5}
-                className="bg-background/70"
-              />
-            </div>
-             <div className="grid gap-2">
-                <Label htmlFor="proposal-type">Proposal Type</Label>
-                <Select onValueChange={setType} value={type} required>
-                    <SelectTrigger id="proposal-type" className="bg-background/70">
-                        <SelectValue placeholder="Select a proposal type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Category Creation">Category Creation</SelectItem>
-                        <SelectItem value="Pricing">Pricing</SelectItem>
-                        <SelectItem value="Governance">Governance</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+
+            {type === 'category' && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="category-name">Category Name</Label>
+                  <Input
+                    id="category-name"
+                    placeholder="e.g., Research Data, Medical Imaging, etc."
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="bg-background/70"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The name of the new data category
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="category-description">Description</Label>
+                  <Textarea
+                    id="category-description"
+                    placeholder="Provide a detailed description of what data this category will contain..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    required
+                    rows={5}
+                    className="bg-background/70"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Describe the purpose and scope of this data category
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="reward-amount">Reward Amount (KAI)</Label>
+                  <Input
+                    id="reward-amount"
+                    type="number"
+                    placeholder="e.g., 1000"
+                    value={rewardAmount}
+                    onChange={(e) => setRewardAmount(e.target.value)}
+                    required
+                    min="1"
+                    step="1"
+                    className="bg-background/70"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The amount of KAI tokens to reward contributors for submitting data to this category
+                  </p>
+                </div>
+              </>
+            )}
+
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="w-full" 
+              disabled={isLoading || !isConnected || !accountCap || !type}
+            >
               {isLoading ? (
                 <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Submitting to Walrus...
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  {proposing ? 'Creating Proposal...' : 'Loading...'}
                 </>
-              ) : 'Create Proposal'}
+              ) : (
+                'Create Proposal'
+              )}
             </Button>
           </form>
         </CardContent>

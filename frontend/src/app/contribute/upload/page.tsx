@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import { AppShell } from '@/components/layout/app-shell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,18 +6,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { UploadCloud } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { UploadCloud, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLendingDataStorage } from '@/hooks/use-walrus';
 import { useToast } from '@/hooks/use-toast';
+import { useSubmitData } from '@/hooks/use-dao';
+import { useCategories } from '@/hooks/use-categories';
+import { useSuiWallet } from '@/hooks/use-sui-wallet';
 
 export default function UploadDataPage() {
   const [datasetName, setDatasetName] = useState('');
   const [datasetDescription, setDatasetDescription] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
 
-  const { storeLendingData, isLoading } = useLendingDataStorage();
+  const { isConnected } = useSuiWallet();
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { storeLendingData, isLoading: walrusLoading } = useLendingDataStorage();
+  const { submitData, isLoading: submitLoading } = useSubmitData();
   const { toast } = useToast();
+
+  const isLoading = walrusLoading || submitLoading;
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -27,77 +43,114 @@ export default function UploadDataPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!file || !datasetName || !datasetDescription) {
+
+    // Validation
+    if (!isConnected) {
       toast({
         variant: 'destructive',
-        title: 'Missing Information',
-        description: 'Please fill out all fields and select a file to upload.',
+        title: 'Wallet Not Connected',
+        description: 'Please connect your wallet to submit data.',
       });
       return;
     }
 
+    if (!file || !datasetName || !datasetDescription || !selectedCategoryId) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Information',
+        description: 'Please fill out all fields, select a category, and choose a file to upload.',
+      });
+      return;
+    }
+
+    // Step 1: Upload file to Walrus
+    toast({
+      title: 'Uploading to Walrus',
+      description: 'Uploading your data file to Walrus storage...',
+    });
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
+    
     reader.onload = async () => {
-      const dataToStore = {
-        name: datasetName,
-        description: datasetDescription,
-        file: reader.result,
-        fileName: file.name,
-        fileType: file.type,
-      };
+      try {
+        const dataToStore = {
+          name: datasetName,
+          description: datasetDescription,
+          file: reader.result,
+          fileName: file.name,
+          fileType: file.type,
+          timestamp: Date.now(),
+        };
 
-      const result = await storeLendingData(dataToStore);
+        const walrusResult = await storeLendingData(dataToStore);
 
-      if (result?.success && result.blobId) {
-        toast({
-          title: 'Proposal Submitted!',
-          description: `Your dataset has been submitted for approval. Blob ID: ${result.blobId}`,
+        if (!walrusResult?.success || !walrusResult.blobId) {
+          toast({
+            variant: 'destructive',
+            title: 'Upload Failed',
+            description: walrusResult?.error || 'Could not store data on Walrus. Please try again.',
+          });
+          return;
+        }
+
+        // Step 2: Create metadata JSON
+        const metadata = JSON.stringify({
+          name: datasetName,
+          description: datasetDescription,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          timestamp: Date.now(),
         });
 
-        // Store metadata in local storage to simulate proposal creation
-        try {
-          const existingDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
-          const newDataset = {
-            id: result.blobId, 
-            name: datasetName,
-            description: datasetDescription,
-            category: 'User Contributed',
-            price: 0, // Price is set in Phase 4
-            contributors: 1, 
-          };
-          
-          existingDatasets.push(newDataset);
-          localStorage.setItem('datasets', JSON.stringify(existingDatasets));
-          
+        // Step 3: Submit to blockchain (creates proposal automatically)
+        toast({
+          title: 'Creating Proposal',
+          description: 'Submitting data submission to the DAO...',
+        });
+
+        const txResult = await submitData(
+          walrusResult.blobId,
+          metadata,
+          selectedCategoryId // Category object ID
+        );
+
+        if (txResult && !txResult.error) {
+          toast({
+            title: 'Submission Successful!',
+            description: `Your data has been submitted and a proposal has been created for DAO approval. Transaction: ${txResult.digest.slice(0, 8)}...`,
+          });
+
           // Clear the form
           setDatasetName('');
           setDatasetDescription('');
+          setSelectedCategoryId('');
           setFile(null);
-
-        } catch (e) {
-            console.error("Failed to save to local storage", e);
-            toast({
-                variant: 'destructive',
-                title: 'Local Storage Error',
-                description: 'Could not save dataset proposal to your browser\'s local storage.',
-            });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Submission Failed',
+            description: txResult?.error || 'Failed to create proposal on-chain.',
+          });
         }
-      } else {
+      } catch (error: any) {
+        console.error('Submission error:', error);
         toast({
           variant: 'destructive',
-          title: 'Upload Failed',
-          description: result?.error || 'Could not store data on Walrus. Please try again.',
+          title: 'Error',
+          description: error.message || 'An unexpected error occurred.',
         });
       }
     };
+
     reader.onerror = () => {
-        toast({
-            variant: 'destructive',
-            title: 'File Read Error',
-            description: 'Could not read the selected file.',
-        });
-    }
+      toast({
+        variant: 'destructive',
+        title: 'File Read Error',
+        description: 'Could not read the selected file.',
+      });
+    };
   };
 
   return (
@@ -131,7 +184,50 @@ export default function UploadDataPage() {
                 onChange={(e) => setDatasetDescription(e.target.value)}
                 required
                 className="bg-background/70"
+                rows={4}
               />
+            </div>
+            
+            {!isConnected && (
+              <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                <p className="text-sm text-yellow-600">
+                  ⚠️ Please connect your wallet to submit data to the blockchain.
+                </p>
+              </div>
+            )}
+
+            <div className="grid gap-2">
+              <Label htmlFor="category-select">Data Category</Label>
+              {categoriesLoading ? (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Loading categories...</span>
+                </div>
+              ) : categories.length === 0 ? (
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-sm text-muted-foreground">
+                    No active categories available. A category proposal must be created first.
+                  </p>
+                </div>
+              ) : (
+                <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId} required>
+                  <SelectTrigger className="bg-background/70" disabled={!isConnected}>
+                    <SelectValue placeholder="Select a data category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{category.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            Reward: {category.rewardAmount} KAI
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
              <div className="grid gap-2">
                 <Label htmlFor="file-upload">Upload Data File (Encrypted)</Label>
@@ -152,8 +248,20 @@ export default function UploadDataPage() {
                     </Label>
                 </div>
             </div>
-            <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Uploading to Walrus...' : 'Submit Dataset Proposal'}
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="w-full" 
+              disabled={isLoading || !isConnected || !selectedCategoryId || categories.length === 0}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {walrusLoading ? 'Uploading to Walrus...' : 'Creating Proposal...'}
+                </>
+              ) : (
+                'Submit Dataset Proposal'
+              )}
             </Button>
           </form>
         </CardContent>

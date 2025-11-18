@@ -1,3 +1,5 @@
+@import '@mysten/dapp-kit/dist/index.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -71,18 +73,17 @@
     @apply scroll-smooth;
   }
 }
+
 ::selection {
   background-color: hsl(var(--primary) / 0.2);
   color: hsl(var(--primary));
 }
 
-/* For Firefox */
 ::-moz-selection {
   background-color: hsl(var(--primary) / 0.2);
   color: hsl(var(--primary));
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;

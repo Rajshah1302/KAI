@@ -1,15 +1,10 @@
 'use client';
 
-/**
- * Sui Wallet Provider
- * Wraps the application with Sui wallet context using @mysten/dapp-kit
- */
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
 import { getFullnodeUrl } from '@mysten/sui.js/client';
-import { ReactNode, useMemo } from 'react';
-import { CURRENT_NETWORK_CONFIG, DEFAULT_NETWORK } from '@/lib/sui/config';
+import { useMemo } from 'react';
+import { DEFAULT_NETWORK, CURRENT_NETWORK_CONFIG } from '@/lib/sui/config';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,32 +16,21 @@ const queryClient = new QueryClient({
   },
 });
 
-interface SuiWalletProviderProps {
-  children: ReactNode;
-}
-
-export function SuiWalletProvider({ children }: SuiWalletProviderProps) {
+export function SuiWalletProvider({ children }: { children: React.ReactNode }) {
   const networks = useMemo(
     () => ({
       [DEFAULT_NETWORK]: {
         url: CURRENT_NETWORK_CONFIG.fullnodeUrl,
       },
-      // Add other networks if needed
-      ...(DEFAULT_NETWORK !== 'mainnet' && {
-        mainnet: {
-          url: getFullnodeUrl('mainnet'),
-        },
-      }),
-      ...(DEFAULT_NETWORK !== 'testnet' && {
-        testnet: {
-          url: getFullnodeUrl('testnet'),
-        },
-      }),
-      ...(DEFAULT_NETWORK !== 'devnet' && {
-        devnet: {
-          url: getFullnodeUrl('devnet'),
-        },
-      }),
+      mainnet: {
+        url: getFullnodeUrl('mainnet'),
+      },
+      testnet: {
+        url: getFullnodeUrl('testnet'),
+      },
+      devnet: {
+        url: getFullnodeUrl('devnet'),
+      },
     }),
     []
   );
@@ -64,4 +48,3 @@ export function SuiWalletProvider({ children }: SuiWalletProviderProps) {
     </QueryClientProvider>
   );
 }
-

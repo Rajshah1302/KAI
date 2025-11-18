@@ -28,7 +28,7 @@ export function useSuiWallet() {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [isLoadingName, setIsLoadingName] = useState(false);
 
-  const address = currentWallet?.accounts[0]?.address
+  const address = currentWallet?.isConnected && currentWallet?.accounts?.[0]?.address
     ? normalizeSuiAddress(currentWallet.accounts[0].address)
     : null;
 
@@ -59,7 +59,7 @@ export function useSuiWallet() {
     displayName,
     isLoading: isLoadingName || (currentWallet?.isConnecting ?? false),
     wallet: currentWallet,
-    currentAccount: currentWallet?.accounts[0] ?? null,
+    currentAccount: currentWallet?.isConnected ? (currentWallet.accounts?.[0] ?? null) : null,
   };
 }
 

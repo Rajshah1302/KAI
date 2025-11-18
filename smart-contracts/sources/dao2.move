@@ -1,4 +1,4 @@
-module dao::contract;
+module dao::kai;
 
 use std::vector;
 use sui::balance::{Self, Balance};
@@ -8,7 +8,6 @@ use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::tx_context::sender;
 
-// Errors
 const EInsufficientKAI: u64 = 1;
 const ENoKAIAvailable: u64 = 2;
 const EWrongDAO: u64 = 3;
@@ -17,30 +16,29 @@ const EVotingEnded: u64 = 5;
 const EVotingNotEnded: u64 = 6;
 const ENotListed: u64 = 7;
 const EInsufficientPayment: u64 = 8;
+const ECategoryInactive: u64 = 9;
+const ECategoryNotFound: u64 = 10;
+const EInvalidData: u64 = 11;
 
-public struct CONTRACT has drop {}
 public struct KAI has drop {}
 
-// DAO Treasury
 public struct DataDAO has key {
     id: UID,
     treasury: Balance<SUI>,
     kai_reserve: Balance<KAI>,
     reward_pool: Balance<KAI>,
-    kai_price: u64, // SUI per KAI (e.g., 1000 = 0.001 SUI per KAI)
-    quorum: u64, // 30%
-    threshold: u64, // 70%
-    vote_time: u64, // 7 days in ms
+    kai_price: u64,
+    quorum: u64,
+    threshold: u64,
+    vote_time: u64,
 }
 
-// User Account
 public struct AccountCap has key, store {
     id: UID,
     dao_id: ID,
     kai_balance: Balance<KAI>,
 }
 
-// Data Category
 public struct DataCategory has key, store {
     id: UID,
     name: vector<u8>,
@@ -49,7 +47,6 @@ public struct DataCategory has key, store {
     active: bool,
 }
 
-// Data Submission
 public struct DataSubmission has key, store {
     id: UID,
     walrus_blob_id: vector<u8>,
@@ -61,29 +58,25 @@ public struct DataSubmission has key, store {
     listed: bool,
 }
 
-// Proposal Types: 1=Category, 2=DataApproval, 3=SetPrice
 public struct Proposal has key, store {
     id: UID,
     dao_id: ID,
     proposal_type: u8,
-    data: vector<u8>, // encoded proposal data
+    data: vector<u8>,
     votes: u64,
     voters: vector<address>,
     ends: u64,
     executed: bool,
 }
 
-// Marketplace
 public struct Marketplace has key {
     id: UID,
-    listings: Table<ID, u64>, // submission_id -> price
+    listings: Table<ID, u64>,
 }
 
-// Init
-fun init(witness: CONTRACT, ctx: &mut TxContext) {
-    // Create KAI currency with 1M supply
+fun init(witness: KAI, ctx: &mut TxContext) {  // ✅ Remove 'entry'
     let (mut treasury_cap, metadata) = coin::create_currency(
-        KAI {},
+        witness,
         6,
         b"KAI",
         b"KAI Token",
@@ -94,24 +87,22 @@ fun init(witness: CONTRACT, ctx: &mut TxContext) {
 
     transfer::public_freeze_object(metadata);
 
-    // Mint total supply: 1,000,000 KAI
     let total_supply = coin::mint(&mut treasury_cap, 1_000_000_000000, ctx);
     let mut total_balance = coin::into_balance(total_supply);
 
-    // Split: 30% for sale, 70% for rewards
     let reserve_amount = 300_000_000000;
     let kai_reserve = balance::split(&mut total_balance, reserve_amount);
-    let reward_pool = total_balance; 
+    let reward_pool = total_balance;
 
     let dao = DataDAO {
         id: object::new(ctx),
         treasury: balance::zero(),
         kai_reserve,
         reward_pool,
-        kai_price: 1000, // 1 SUI = 1000 KAI
+        kai_price: 1000,
         quorum: 30,
         threshold: 70,
-        vote_time: 604800000, // 7 days
+        vote_time: 604800000,
     };
 
     transfer::share_object(dao);
@@ -120,10 +111,8 @@ fun init(witness: CONTRACT, ctx: &mut TxContext) {
         listings: table::new(ctx),
     });
 
-    // Destroy treasury cap (fixed supply)
     transfer::public_transfer(treasury_cap, @0x0);
 }
-
 // Purchase KAI with SUI
 public fun purchase_kai(dao: &mut DataDAO, payment: Coin<SUI>, ctx: &mut TxContext): AccountCap {
     let sui_amount = coin::value(&payment);
@@ -216,17 +205,26 @@ public fun propose_category(
 }
 
 // Submit Data (Auto-creates Proposal Type 2)
+// This function creates a data submission and automatically creates a proposal for DAO approval
 public fun submit_data(
     dao: &mut DataDAO,
+    category: &DataCategory,
     walrus_blob_id: vector<u8>,
     metadata: vector<u8>,
-    category_id: ID,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    let dao_id = object::uid_to_inner(&dao.id);
+    // Validate category is active
+    assert!(category.active, ECategoryInactive);
+    
+    // Validate inputs are not empty
+    assert!(vector::length(&walrus_blob_id) > 0, EInvalidData);
+    assert!(vector::length(&metadata) > 0, EInvalidData);
 
-    // Create submission
+    let dao_id = object::uid_to_inner(&dao.id);
+    let category_id = object::id(category);
+
+    // Create submission with all relevant data
     let submission = DataSubmission {
         id: object::new(ctx),
         walrus_blob_id,
@@ -239,15 +237,35 @@ public fun submit_data(
     };
 
     let submission_id = object::id(&submission);
+    
+    // Make submission a shared object so it can be queried and referenced
     transfer::share_object(submission);
 
-    // Auto-create proposal
+    // Auto-create proposal for data approval
+    // Encode proposal data: submission_id|walrus_blob_id|metadata|category_id
+    let mut proposal_data = vector::empty<u8>();
+    
+    // Add submission ID (32 bytes)
+    vector::append(&mut proposal_data, object::id_to_bytes(&submission_id));
+    
+    // Add separator and walrus blob ID
+    vector::push_back(&mut proposal_data, 0); // separator
+    vector::append(&mut proposal_data, walrus_blob_id);
+    
+    // Add separator and metadata
+    vector::push_back(&mut proposal_data, 0); // separator
+    vector::append(&mut proposal_data, metadata);
+    
+    // Add separator and category ID
+    vector::push_back(&mut proposal_data, 0); // separator
+    vector::append(&mut proposal_data, object::id_to_bytes(&category_id));
+
     let ends = clock::timestamp_ms(clock) + dao.vote_time;
     let proposal = Proposal {
         id: object::new(ctx),
         dao_id,
-        proposal_type: 2,
-        data: object::id_to_bytes(&submission_id),
+        proposal_type: 2, // Data Approval Proposal
+        data: proposal_data,
         votes: 0,
         voters: vector::empty(),
         ends,
@@ -316,6 +334,7 @@ public fun execute_category_proposal(
 }
 
 // Execute Data Approval Proposal
+// This function executes a data approval proposal after voting has ended
 public fun execute_data_proposal(
     dao: &mut DataDAO,
     proposal: &mut Proposal,
@@ -328,7 +347,9 @@ public fun execute_data_proposal(
     assert!(proposal.ends < clock::timestamp_ms(clock), EVotingNotEnded);
     assert!(!proposal.executed, 0);
     assert!(proposal.proposal_type == 2, 0);
+    assert!(&submission.category_id == object::id(category), ECategoryNotFound);
 
+    // Calculate total circulating KAI for quorum calculation
     let total_supply = 1_000_000_000000;
     let locked = balance::value(&dao.kai_reserve) + balance::value(&dao.reward_pool);
     let total_kai = total_supply - locked;
@@ -339,13 +360,18 @@ public fun execute_data_proposal(
         0
     };
 
+    // Mark proposal as executed
     proposal.executed = true;
 
-    if (vote_percentage >= dao.quorum) {
+    // If quorum reached and approval threshold met, approve submission
+    if (vote_percentage >= dao.quorum && vote_percentage >= dao.threshold) {
         submission.approved = true;
 
-        // Reward submitter
+        // Reward submitter from reward pool
+        assert!(balance::value(&dao.reward_pool) >= category.reward_amount, EInsufficientKAI);
         let reward = balance::split(&mut dao.reward_pool, category.reward_amount);
+        
+        // Create or get existing account for submitter and transfer reward
         let reward_account = AccountCap {
             id: object::new(ctx),
             dao_id: object::uid_to_inner(&dao.id),
@@ -503,6 +529,80 @@ public fun get_kai_balance(account: &AccountCap): u64 { balance::value(&account.
 public fun get_treasury(dao: &DataDAO): u64 { balance::value(&dao.treasury) }
 
 public fun get_reward_pool(dao: &DataDAO): u64 { balance::value(&dao.reward_pool) }
+
+public fun get_kai_reserve(dao: &DataDAO): u64 { balance::value(&dao.kai_reserve) }
+
+public fun get_dao_id(dao: &DataDAO): ID { object::uid_to_inner(&dao.id) }
+
+// Submission getters
+public fun get_submission_submitter(submission: &DataSubmission): address { submission.submitter }
+
+public fun get_submission_category(submission: &DataSubmission): ID { submission.category_id }
+
+public fun get_submission_walrus_id(submission: &DataSubmission): vector<u8> { submission.walrus_blob_id }
+
+public fun get_submission_metadata(submission: &DataSubmission): vector<u8> { submission.metadata }
+
+public fun is_submission_approved(submission: &DataSubmission): bool { submission.approved }
+
+public fun is_submission_listed(submission: &DataSubmission): bool { submission.listed }
+
+public fun get_submission_price(submission: &DataSubmission): u64 { submission.price }
+
+// Proposal getters
+public fun get_proposal_type(proposal: &Proposal): u8 { proposal.proposal_type }
+
+public fun get_proposal_votes(proposal: &Proposal): u64 { proposal.votes }
+
+public fun get_proposal_ends(proposal: &Proposal): u64 { proposal.ends }
+
+public fun is_proposal_executed(proposal: &Proposal): bool { proposal.executed }
+
+public fun get_proposal_voters(proposal: &Proposal): vector<address> { proposal.voters }
+
+public fun get_proposal_data(proposal: &Proposal): vector<u8> { proposal.data }
+
+// Helper to decode submission data from proposal
+// Returns: (submission_id_bytes, walrus_id, metadata, category_id_bytes)
+// Note: IDs are returned as bytes; convert to ID type in frontend/off-chain
+public fun decode_submission_proposal_data(data: &vector<u8>): (vector<u8>, vector<u8>, vector<u8>, vector<u8>) {
+    let mut i = 0;
+    
+    // Extract submission ID (first 32 bytes)
+    let mut submission_id_bytes = vector::empty<u8>();
+    while (i < 32 && i < vector::length(data)) {
+        vector::push_back(&mut submission_id_bytes, *vector::borrow(data, i));
+        i = i + 1;
+    };
+    
+    // Skip separator
+    i = i + 1;
+    
+    // Extract walrus blob ID
+    let mut walrus_id = vector::empty<u8>();
+    while (i < vector::length(data) && *vector::borrow(data, i) != 0) {
+        vector::push_back(&mut walrus_id, *vector::borrow(data, i));
+        i = i + 1;
+    };
+    i = i + 1; // Skip separator
+    
+    // Extract metadata
+    let mut metadata = vector::empty<u8>();
+    while (i < vector::length(data) && *vector::borrow(data, i) != 0) {
+        vector::push_back(&mut metadata, *vector::borrow(data, i));
+        i = i + 1;
+    };
+    i = i + 1; // Skip separator
+    
+    // Extract category ID (remaining 32 bytes)
+    let mut category_id_bytes = vector::empty<u8>();
+    while (i < vector::length(data) && vector::length(&category_id_bytes) < 32) {
+        vector::push_back(&mut category_id_bytes, *vector::borrow(data, i));
+        i = i + 1;
+    };
+    
+    (submission_id_bytes, walrus_id, metadata, category_id_bytes)
+}
 
 // TESTS
 #[test_only]
@@ -774,17 +874,19 @@ fun test_05_submit_data_and_approve() {
     ts::next_tx(&mut ts, USER2);
     {
         let mut dao = ts::take_shared<DataDAO>(&ts);
+        let category = ts::take_shared<DataCategory>(&ts);
 
         submit_data(
             &mut dao,
+            &category,
             b"walrus_blob_123",
             b"metadata_json",
-            category_id,
             &clock,
             ts::ctx(&mut ts),
         );
 
         ts::return_shared(dao);
+        ts::return_shared(category);
     };
 
     // User1 votes to approve

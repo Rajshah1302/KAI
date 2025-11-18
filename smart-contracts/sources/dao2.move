@@ -1,8 +1,9 @@
 module dao::kai;
 
+use std::vector;
 use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
-use sui::coin::{Self, Coin};
+use sui::coin::{Self, Coin, TreasuryCap};
 use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::tx_context::sender;

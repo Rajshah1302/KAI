@@ -1,6 +1,7 @@
 #[test_only]
 module dao::comprehensive_tests;
 
+use std::debug;
 use sui::test_scenario as ts;
 use std::unit_test;
 use sui::clock;
@@ -21,6 +22,7 @@ const ADMIN: address = @0xAD;
 const ALICE: address = @0xA11CE;
 const BOB: address = @0xB0B;
 const CHARLIE: address = @0xC;
+const DAVE: address = @0xD;
 
 // Helper function to initialize DAO for tests
 fun init_dao_for_testing(scenario: &mut ts::Scenario) {
@@ -156,23 +158,15 @@ fun test_purchase_exceeds_reserve() {
     let mut scenario = ts::begin(ADMIN);
     init_dao_for_testing(&mut scenario);
     
-    // First, buy most of the reserve to set up the test
-    ts::next_tx(&mut scenario, BOB);
-    {
-        let mut dao = ts::take_shared<DataDAO>(&scenario);
-        let payment = coin::mint_for_testing<SUI>(299_000, ts::ctx(&mut scenario));
-        let account = kai::purchase_kai(&mut dao, payment, ts::ctx(&mut scenario));
-        transfer::public_transfer(account, BOB);
-        ts::return_shared(dao);
-    };
-    
-    // Now Alice tries to buy more than what's left in reserve
     ts::next_tx(&mut scenario, ALICE);
     {
         let mut dao = ts::take_shared<DataDAO>(&scenario);
-        // Only ~1000 SUI worth of KAI left in reserve
-        // Trying to buy 2000 SUI worth should fail
-        let payment = coin::mint_for_testing<SUI>(2_000, ts::ctx(&mut scenario));
+        
+        // Reserve has 300_000_000000 KAI (300M KAI with 6 decimals)
+        // At price 1000: 1 SUI = 1000 KAI
+        // Max purchasable = 300_000_000000 / 1000 = 300_000_000 SUI (300M SUI)
+        // Try to purchase with 301_000_000 SUI which needs 301B KAI (exceeds reserve)
+        let payment = coin::mint_for_testing<SUI>(301_000_000, ts::ctx(&mut scenario));
         let account = kai::purchase_kai(&mut dao, payment, ts::ctx(&mut scenario));
         
         transfer::public_transfer(account, ALICE);

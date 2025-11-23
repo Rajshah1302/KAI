@@ -1,4 +1,4 @@
-'use client';
+sui client active-address'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';

@@ -8,6 +8,7 @@ use sui::sui::SUI;
 use sui::table::{Self, Table};
 use sui::tx_context::sender;
 
+// Error codes
 const EInsufficientKAI: u64 = 1;
 const ENoKAIAvailable: u64 = 2;
 const EWrongDAO: u64 = 3;
@@ -20,8 +21,10 @@ const ECategoryInactive: u64 = 9;
 const ECategoryNotFound: u64 = 10;
 const EInvalidData: u64 = 11;
 
+// Token witness
 public struct KAI has drop {}
 
+// Main DAO object: manages treasury, KAI reserves (30%), reward pool (70%), and governance params
 public struct DataDAO has key {
     id: UID,
     treasury: Balance<SUI>,
@@ -33,12 +36,14 @@ public struct DataDAO has key {
     vote_time: u64,
 }
 
+// User account: holds KAI balance for voting and rewards
 public struct AccountCap has key, store {
     id: UID,
     dao_id: ID,
     kai_balance: Balance<KAI>,
 }
 
+// Data category: defines types of data that can be submitted with reward amounts
 public struct DataCategory has key, store {
     id: UID,
     name: vector<u8>,
@@ -47,6 +52,7 @@ public struct DataCategory has key, store {
     active: bool,
 }
 
+// Data submission: encrypted data stored on Walrus, requires DAO approval to list
 public struct DataSubmission has key, store {
     id: UID,
     walrus_blob_id: vector<u8>,
@@ -58,6 +64,7 @@ public struct DataSubmission has key, store {
     listed: bool,
 }
 
+// Proposal: governance voting (types: 1=category, 2=data approval, 3=pricing)
 public struct Proposal has key, store {
     id: UID,
     dao_id: ID,
@@ -69,12 +76,14 @@ public struct Proposal has key, store {
     executed: bool,
 }
 
+// Marketplace: tracks listed data prices
 public struct Marketplace has key {
     id: UID,
     listings: Table<ID, u64>,
 }
 
-fun init(witness: KAI, ctx: &mut TxContext) {  // ✅ Remove 'entry'
+// Initialize: mint 1B KAI (300M reserve for sale, 700M reward pool)
+fun init(witness: KAI, ctx: &mut TxContext) {
     let (mut treasury_cap, metadata) = coin::create_currency(
         witness,
         6,
@@ -113,7 +122,8 @@ fun init(witness: KAI, ctx: &mut TxContext) {  // ✅ Remove 'entry'
 
     transfer::public_transfer(treasury_cap, @0x0);
 }
-// Purchase KAI with SUI
+
+// Buy KAI with SUI at 1:1000 rate (1 SUI = 1000 KAI)
 public fun purchase_kai(dao: &mut DataDAO, payment: Coin<SUI>, ctx: &mut TxContext): AccountCap {
     let sui_amount = coin::value(&payment);
     let kai_amount = sui_amount * dao.kai_price;
@@ -131,7 +141,7 @@ public fun purchase_kai(dao: &mut DataDAO, payment: Coin<SUI>, ctx: &mut TxConte
     }
 }
 
-// Add KAI to existing account
+// Add more KAI to existing account by purchasing with SUI
 public fun add_kai(
     dao: &mut DataDAO,
     account: &mut AccountCap,
@@ -150,7 +160,7 @@ public fun add_kai(
     balance::join(&mut dao.treasury, coin::into_balance(payment));
 }
 
-// Burn KAI to redeem SUI
+// Burn KAI to redeem SUI from treasury
 public fun burn_kai(
     dao: &mut DataDAO,
     account: &mut AccountCap,
@@ -167,7 +177,7 @@ public fun burn_kai(
     coin::take(&mut dao.treasury, sui_amount, ctx)
 }
 
-// Create Category Proposal (Type 1)
+// Create proposal to add new data category (Type 1)
 public fun propose_category(
     dao: &mut DataDAO,
     account: &mut AccountCap,
@@ -204,8 +214,7 @@ public fun propose_category(
     transfer::share_object(proposal);
 }
 
-// Submit Data (Auto-creates Proposal Type 2)
-// This function creates a data submission and automatically creates a proposal for DAO approval
+// Submit data to Walrus & auto-create approval proposal (Type 2)
 public fun submit_data(
     dao: &mut DataDAO,
     category: &DataCategory,
@@ -293,7 +302,7 @@ public fun vote(
     vector::push_back(&mut proposal.voters, sender(ctx));
 }
 
-// Execute Category Proposal
+// Execute category proposal if quorum reached (Type 1)
 public fun execute_category_proposal(
     dao: &mut DataDAO,
     proposal: &mut Proposal,
@@ -333,8 +342,7 @@ public fun execute_category_proposal(
     };
 }
 
-// Execute Data Approval Proposal
-// This function executes a data approval proposal after voting has ended
+// Execute data approval, reward submitter from pool if approved (Type 2)
 public fun execute_data_proposal(
     dao: &mut DataDAO,
     proposal: &mut Proposal,
@@ -382,7 +390,7 @@ public fun execute_data_proposal(
     };
 }
 
-// Execute Price Proposal
+// Execute pricing proposal and list data on marketplace (Type 3)
 public fun execute_price_proposal(
     dao: &mut DataDAO,
     proposal: &mut Proposal,
@@ -418,6 +426,7 @@ public fun execute_price_proposal(
     };
 }
 
+// Create pricing proposal for approved data (Type 3)
 public fun propose_price(
     dao: &mut DataDAO,
     account: &AccountCap,
@@ -448,7 +457,7 @@ public fun propose_price(
     transfer::share_object(proposal);
 }
 
-// Purchase Data
+// Purchase listed data, payment goes to treasury
 public fun purchase_data(
     dao: &mut DataDAO,
     submission: &DataSubmission,
@@ -461,7 +470,8 @@ public fun purchase_data(
     balance::join(&mut dao.treasury, coin::into_balance(payment));
 }
 
-// Helper functions
+// === Helper Functions: encoding/decoding proposal data ===
+
 fun encode_u64(n: u64): vector<u8> {
     let mut bytes = vector::empty<u8>();
     let mut num = n;
@@ -608,7 +618,7 @@ public fun decode_submission_proposal_data(data: &vector<u8>): (vector<u8>, vect
 #[test_only]
 use sui::test_scenario as ts;
 #[test_only]
-use sui::test_utils;
+use std::unit_test;
 
 #[test_only]
 const ADMIN: address = @0xAD;
@@ -618,6 +628,7 @@ const USER1: address = @0xA;
 const USER2: address = @0xB;
 #[test_only]
 const USER3: address = @0xC;
+
 #[test_only]
 public fun test_init(ctx: &mut TxContext) {
     // Create mock treasury cap and mint supply
@@ -647,7 +658,50 @@ public fun test_init(ctx: &mut TxContext) {
     });
 
     // Destroy supply (not needed in tests)
-    sui::test_utils::destroy(total_supply);
+    std::unit_test::destroy(total_supply);
+}
+
+// Test helper functions
+#[test_only]
+public fun create_test_category(
+    name: vector<u8>,
+    description: vector<u8>,
+    reward_amount: u64,
+    active: bool,
+    ctx: &mut TxContext,
+) {
+    let category = DataCategory {
+        id: object::new(ctx),
+        name,
+        description,
+        reward_amount,
+        active,
+    };
+    transfer::share_object(category);
+}
+
+#[test_only]
+public fun create_test_submission(
+    walrus_blob_id: vector<u8>,
+    metadata: vector<u8>,
+    category_id: ID,
+    submitter: address,
+    approved: bool,
+    price: u64,
+    listed: bool,
+    ctx: &mut TxContext,
+) {
+    let submission = DataSubmission {
+        id: object::new(ctx),
+        walrus_blob_id,
+        metadata,
+        category_id,
+        submitter,
+        approved,
+        price,
+        listed,
+    };
+    transfer::share_object(submission);
 }
 #[test]
 fun test_01_init_and_purchase_kai() {
@@ -738,7 +792,7 @@ fun test_03_burn_kai_for_sui() {
         assert!(coin::value(&sui_coin) == 500, 3);
         assert!(get_kai_balance(&account) == 500_000, 4); // 500 KAI left
 
-        test_utils::destroy(sui_coin);
+        std::unit_test::destroy(sui_coin);
         ts::return_to_sender(&ts, account);
         ts::return_shared(dao);
     };

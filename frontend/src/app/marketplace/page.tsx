@@ -85,6 +85,7 @@ const defaultDatasets = [
 ];
 
 const allCategories = ['all', ...new Set(defaultDatasets.map((d) => d.category)), 'User Contributed'];
+export const dynamic = "force-dynamic";
 
 export default function MarketplacePage() {
   const [datasets, setDatasets] = useState(defaultDatasets);
@@ -94,7 +95,7 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('datasets');
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('datasets') : null;
       const storedDatasets = raw ? JSON.parse(raw) : [];
       const combined = [...defaultDatasets];
       const storedIds = new Set(combined.map((d) => d.id));

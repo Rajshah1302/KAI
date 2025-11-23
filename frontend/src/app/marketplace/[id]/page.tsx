@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,18 +23,18 @@ const defaultDataset = {
     lastUpdated: 'N/A',
 };
 
-export default function DatasetDetailsPage({ params }: { params: { id: string } }) {
+export default function DatasetDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const [dataset, setDataset] = useState(defaultDataset);
   const [isDownloading, setIsDownloading] = useState(false);
   const { retrieveLendingData, isLoading } = useLendingDataStorage();
   const { toast } = useToast();
 
-  const blobId = params.id;
+  const { id: blobId } = use(params);
 
   // Fetch dataset metadata from local storage to display details
   useEffect(() => {
     try {
-      const allDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+      const allDatasets = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('datasets') || '[]') : [];
       const foundDataset = allDatasets.find((d: any) => d.id === blobId);
       if (foundDataset) {
         setDataset({ ...defaultDataset, ...foundDataset });
@@ -59,19 +59,36 @@ export default function DatasetDetailsPage({ params }: { params: { id: string } 
 
   const handleDownload = async () => {
     setIsDownloading(true);
+    
+    // Check if this is a demo dataset (ID is just a number)
+    const isDemoDataset = /^\d+$/.test(blobId);
+    
+    if (isDemoDataset) {
+      toast({ 
+        title: 'Demo Dataset', 
+        description: 'This is a demo dataset. Upload real data in the Contribute section to test actual Walrus storage.',
+        variant: 'default'
+      });
+      setIsDownloading(false);
+      return;
+    }
+
     toast({ title: 'Processing Purchase...', description: 'Fetching your data securely from the network.' });
 
+    // Only try Walrus for real blob IDs
     const storedData = await retrieveLendingData(blobId);
     
     if (storedData && storedData.file && storedData.fileName) {
       try {
         // Create a link and trigger download
-        const link = document.createElement('a');
-        link.href = storedData.file; // This is the data URI
-        link.download = storedData.fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (typeof window !== 'undefined') {
+          const link = document.createElement('a');
+          link.href = storedData.file; // This is the data URI
+          link.download = storedData.fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
         
         toast({ title: 'Download Started!', description: `Your download of ${storedData.fileName} should begin shortly.` });
       } catch (e) {
@@ -82,7 +99,7 @@ export default function DatasetDetailsPage({ params }: { params: { id: string } 
       toast({
         variant: 'destructive',
         title: 'Purchase Failed',
-        description: 'Could not retrieve data from Walrus. The data may be unavailable or the blob ID is incorrect.',
+        description: 'Could not retrieve data. The data may no longer be available.',
       });
     }
 

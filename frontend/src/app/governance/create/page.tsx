@@ -44,8 +44,27 @@ export default function CreateProposalPage() {
     if (!accountCap) {
       toast({
         variant: 'destructive',
-        title: 'Account Required',
-        description: 'You need an AccountCap to create proposals. Purchase KAI tokens first.',
+        title: 'AccountCap Required',
+        description: 'You need to purchase KAI tokens first to get an AccountCap. Go to Dashboard → Purchase KAI.',
+      });
+      return;
+    }
+
+    if (!dao) {
+      toast({
+        variant: 'destructive',
+        title: 'DAO Not Loaded',
+        description: 'Failed to load DAO information. Please refresh the page.',
+      });
+      return;
+    }
+
+    // Verify AccountCap matches DAO
+    if (accountCap.daoId !== dao.id) {
+      toast({
+        variant: 'destructive',
+        title: 'AccountCap Mismatch',
+        description: `Your AccountCap is for a different DAO. Expected: ${dao.id}, Got: ${accountCap.daoId}`,
       });
       return;
     }
@@ -79,14 +98,13 @@ export default function CreateProposalPage() {
       return;
     }
 
-    if (!dao) {
-      toast({
-        variant: 'destructive',
-        title: 'DAO Not Loaded',
-        description: 'Failed to load DAO information. Please try again.',
-      });
-      return;
-    }
+    console.log('Creating proposal with:', {
+      name,
+      description,
+      rewardInMist: rewardInMist.toString(),
+      daoId: dao.id,
+      accountCapId: accountCap.id,
+    });
 
     const result = await proposeCategory(
       name,

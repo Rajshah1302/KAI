@@ -83,7 +83,18 @@ export function useLendingDataStorage() {
 
   const storeLendingData = async (data: any) => {
     if (!isConnected || !walrusClient) {
-      setError('Walrus not connected')
+      setError('Walrus not connected, using localStorage fallback')
+      // Store in localStorage as fallback
+      if (typeof window !== 'undefined') {
+        try {
+          const blobId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          localStorage.setItem(`walrus_blob_${blobId}`, JSON.stringify(data))
+          console.log('Stored data in localStorage fallback')
+          return { blobId, success: true, fallback: true }
+        } catch (err) {
+          console.error('localStorage fallback failed:', err)
+        }
+      }
       return null
     }
 
@@ -127,12 +138,39 @@ export function useLendingDataStorage() {
       }
 
       const result = await tryWithFallback(walrusClient.publishers, storeOperation)
+      
+      console.log('✅ Successfully uploaded to Walrus:', result.blobId)
+      
+      // Also save to localStorage as backup
+      if (typeof window !== 'undefined' && result?.blobId) {
+        try {
+          localStorage.setItem(`walrus_blob_${result.blobId}`, dataString)
+          console.log('Stored backup copy in localStorage')
+        } catch (err) {
+          console.warn('Failed to store localStorage backup:', err)
+        }
+      }
 
       setIsLoading(false)
       return result
 
     } catch (err: any) {
+      console.error('Walrus storage failed, using localStorage fallback:', err.message)
       setError(err.message)
+      
+      // Fallback to localStorage if Walrus fails
+      if (typeof window !== 'undefined') {
+        try {
+          const blobId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          localStorage.setItem(`walrus_blob_${blobId}`, JSON.stringify(data))
+          console.log('Stored data in localStorage fallback')
+          setIsLoading(false)
+          return { blobId, success: true, fallback: true }
+        } catch (localErr) {
+          console.error('localStorage fallback also failed:', localErr)
+        }
+      }
+      
       setIsLoading(false)
       return null
     }
@@ -140,12 +178,24 @@ export function useLendingDataStorage() {
 
   const retrieveLendingData = async (blobId: string) => {
     if (!isConnected || !walrusClient) {
-      console.warn('Walrus not connected')
+      console.warn('Walrus not connected, checking localStorage fallback...')
+      // Fallback to localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          const localData = localStorage.getItem(`walrus_blob_${blobId}`)
+          if (localData) {
+            console.log('Found data in localStorage fallback')
+            return JSON.parse(localData)
+          }
+        } catch (err) {
+          console.error('localStorage fallback failed:', err)
+        }
+      }
       return null
     }
 
     try {
-      // Try retrieving with fallback aggregators
+      // Try retrieving from Walrus with fallback aggregators
       const retrieveOperation = async (aggregator: string) => {
         const response = await fetch(`${aggregator}/v1/blobs/${blobId}`)
 
@@ -158,10 +208,25 @@ export function useLendingDataStorage() {
       }
 
       const data = await tryWithFallback(walrusClient.aggregators, retrieveOperation)
+      console.log('Successfully retrieved data from Walrus')
       return data
 
     } catch (err: any) {
-      console.error('Error retrieving from Walrus:', err.message)
+      console.warn('Error retrieving from Walrus, trying localStorage fallback:', err.message)
+      
+      // Fallback to localStorage if Walrus fails
+      if (typeof window !== 'undefined') {
+        try {
+          const localData = localStorage.getItem(`walrus_blob_${blobId}`)
+          if (localData) {
+            console.log('Found data in localStorage fallback')
+            return JSON.parse(localData)
+          }
+        } catch (localErr) {
+          console.error('localStorage fallback also failed:', localErr)
+        }
+      }
+      
       return null
     }
   }

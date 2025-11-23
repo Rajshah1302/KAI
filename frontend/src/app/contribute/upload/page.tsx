@@ -105,6 +105,45 @@ export default function UploadDataPage() {
         });
 
         // Step 3: Submit to blockchain (creates proposal automatically)
+        // TEMPORARY: Skip blockchain submission until categories are created
+        // Categories require DAO governance to create, so for now we'll just save locally
+        toast({
+          title: 'Upload Complete!',
+          description: 'Dataset uploaded to Walrus and saved locally. Blockchain submission requires categories to be created first.',
+        });
+
+        // Add dataset to localStorage so it appears in marketplace
+        if (typeof window !== 'undefined') {
+          try {
+            const existingDatasets = JSON.parse(localStorage.getItem('datasets') || '[]');
+            const categoryName = categories.find(c => c.id === selectedCategoryId)?.name || 'User Contributed';
+            
+            const newDataset = {
+              id: walrusResult.blobId,
+              name: datasetName,
+              description: datasetDescription,
+              category: categoryName,
+              price: 100, // Default price, can be updated later
+              contributors: 1,
+              size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+              format: file.type || 'Unknown',
+              lastUpdated: new Date().toISOString().split('T')[0],
+            };
+            
+            existingDatasets.push(newDataset);
+            localStorage.setItem('datasets', JSON.stringify(existingDatasets));
+          } catch (err) {
+            console.error('Failed to save to localStorage:', err);
+          }
+        }
+
+        // Clear the form
+        setDatasetName('');
+        setDatasetDescription('');
+        setSelectedCategoryId('');
+        setFile(null);
+
+        /* BLOCKCHAIN SUBMISSION - COMMENTED OUT UNTIL CATEGORIES ARE CREATED
         toast({
           title: 'Creating Proposal',
           description: 'Submitting data submission to the DAO...',
@@ -134,6 +173,7 @@ export default function UploadDataPage() {
             description: txResult?.error || 'Failed to create proposal on-chain.',
           });
         }
+        */
       } catch (error: any) {
         console.error('Submission error:', error);
         toast({

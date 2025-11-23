@@ -55,13 +55,13 @@ export const CURRENT_NETWORK_CONFIG = NETWORK_CONFIGS[DEFAULT_NETWORK];
 // Contract addresses - these should be set after deployment
 export const CONTRACT_ADDRESSES = {
   // Main contract module address (set this after deployment)
-  PACKAGE_ID:  '0xad565ac9e3aa4ad896e39f279e5b014fedf9f5023dbda1fdecb4fe577e85f9fe',
+  PACKAGE_ID:  '0x2e5f7fdf6822e5671a641adb434c70950100cf1942b9b7ae2887e51536e1095e',
   // DataDAO shared object ID
-  DATA_DAO_ID:  '0x0417758e231c61da4f26cd26276193efcdda10742e0b2ab308301710e9d4a4fc',
+  DATA_DAO_ID:  '0xd67ed460a8e7d0db1279dd21cf05843434c1a27341ca007926aa036d9b011aeb',
   // Marketplace shared object ID
-  MARKETPLACE_ID:  '0x14275541a3b71fbc0521cf0d118a4bbc7131be7aa06e7913bb99ca05e9d10cff',
+  MARKETPLACE_ID:  '0x98f29f34af59fe3277e39718942f21af51b296971629f8ef5ee0115ffd1dcba8',
   // KAI Coin type
-  KAI_COIN_TYPE: `${process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0xad565ac9e3aa4ad896e39f279e5b014fedf9f5023dbda1fdecb4fe577e85f9fe'}::kai::KAI`,
+  KAI_COIN_TYPE: `${process.env.NEXT_PUBLIC_SUI_PACKAGE_ID || '0x2e5f7fdf6822e5671a641adb434c70950100cf1942b9b7ae2887e51536e1095e'}::kai::KAI`,
 } as const;
 
 // SuiNS Registry address

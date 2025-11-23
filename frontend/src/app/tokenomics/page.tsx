@@ -2,44 +2,15 @@
 
 import { AppShell } from '@/components/layout/app-shell';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Pie, PieChart, Cell } from "recharts";
-import { Coins, Database, Zap, Users, Shield, Award, Briefcase, GitPullRequest } from 'lucide-react';
+import { Database, Shield, Award, GitPullRequest } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import dynamic from 'next/dynamic';
 
-const tokenDistributionData = [
-  { browser: 'Community Treasury', value: 40, fill: 'hsl(var(--chart-1))' },
-  { browser: 'Contributors & Rewards', value: 25, fill: 'hsl(var(--chart-2))' },
-  { browser: 'Ecosystem Development', value: 15, fill: 'hsl(var(--chart-3))' },
-  { browser: 'Team & Advisors', value: 10, fill: 'hsl(var(--chart-4))' },
-  { browser: 'Public Sale', value: 10, fill: 'hsl(var(--chart-5))' },
-];
-
-const chartConfig = {
-  value: {
-    label: 'Value',
-  },
-  'Community Treasury': {
-    label: 'Community Treasury',
-    color: 'hsl(var(--chart-1))',
-  },
-  'Contributors & Rewards': {
-    label: 'Contributors & Rewards',
-    color: 'hsl(var(--chart-2))',
-  },
-  'Ecosystem Development': {
-    label: 'Ecosystem Development',
-    color: 'hsl(var(--chart-3))',
-  },
-  'Team & Advisors': {
-    label: 'Team & Advisors',
-    color: 'hsl(var(--chart-4))',
-  },
-  'Public Sale': {
-    label: 'Public Sale',
-    color: 'hsl(var(--chart-5))',
-  },
-};
+// Import chart component dynamically to prevent SSR issues
+const TokenDistributionChart = dynamic(() => import('@/components/tokenomics/distribution-chart'), { 
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-[300px]">Loading chart...</div>
+});
 
 const tokenUtilities = [
     { icon: <Database className="h-6 w-6 text-primary"/>, title: "Data Purchase", description: "Acquire datasets from the marketplace using KAI tokens." },
@@ -82,28 +53,7 @@ export default function TokenomicsPage() {
             <CardDescription>Allocation of the total KAI token supply.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 pb-0 flex items-center justify-center">
-             <ChartContainer
-              config={chartConfig}
-              className="mx-auto aspect-square h-full max-h-[300px]"
-            >
-              <PieChart>
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <Pie
-                  data={tokenDistributionData}
-                  dataKey="value"
-                  nameKey="browser"
-                  innerRadius={60}
-                  strokeWidth={5}
-                >
-                  {tokenDistributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ChartContainer>
+            <TokenDistributionChart />
           </CardContent>
         </Card>
       </div>

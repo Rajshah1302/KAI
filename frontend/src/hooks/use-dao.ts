@@ -6,7 +6,7 @@
  */
 
 import { useSuiClient } from '@mysten/dapp-kit';
-import { useCurrentWallet } from '@mysten/dapp-kit';
+import { useWallet } from '@suiet/wallet-kit';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { useEffect, useState, useCallback } from 'react';
 import { CONTRACT_ADDRESSES, CURRENT_NETWORK_CONFIG } from '@/lib/sui/config';
@@ -46,9 +46,14 @@ export function useDao(daoId?: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const targetDaoId = "0x0417758e231c61da4f26cd26276193efcdda10742e0b2ab308301710e9d4a4fc" || CONTRACT_ADDRESSES.DATA_DAO_ID;
+  const targetDaoId = daoId || CONTRACT_ADDRESSES.DATA_DAO_ID;
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     if (!targetDaoId) {
       setError('DAO ID not configured');
       setIsLoading(false);
@@ -98,15 +103,20 @@ export function useDao(daoId?: string) {
  */
 export function useAccountCap(daoId?: string) {
   const client = useSuiClient();
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const [accountCap, setAccountCap] = useState<AccountCap | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const targetDaoId = "0x0417758e231c61da4f26cd26276193efcdda10742e0b2ab308301710e9d4a4fc" || CONTRACT_ADDRESSES.DATA_DAO_ID;
-  const address = wallet?.currentWallet?.accounts?.[0]?.address;
+  const targetDaoId = daoId || CONTRACT_ADDRESSES.DATA_DAO_ID;
+  const address = wallet?.address;
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     if (!address || !targetDaoId) {
       setAccountCap(null);
       setIsLoading(false);
@@ -116,40 +126,21 @@ export function useAccountCap(daoId?: string) {
     setIsLoading(true);
     setError(null);
 
-    // Query for AccountCap owned by user
-    const rpcUrl = CURRENT_NETWORK_CONFIG.fullnodeUrl;
-
-    fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'suix_getOwnedObjects',
-        params: [
-          address,
-          {
-            filter: {
-              StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::contract::AccountCap`,
-            },
-            options: {
-              showContent: true,
-            },
-          },
-          null, // cursor
-          10, // limit
-        ],
-      }),
-    })
-      .then((res) => res.json())
-      .then((data: any) => {
-        if (data.error) {
-          throw new Error(data.error.message || 'Query failed');
-        }
-
-        const objects = data.result?.data || [];
+    // Query for AccountCap owned by user using client SDK
+    client
+      .getOwnedObjects({
+        owner: address,
+        filter: {
+          StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::AccountCap`,
+        },
+        options: {
+          showContent: true,
+        },
+      })
+      .then((result) => {
+        const objects = result.data || [];
         const caps = objects
-          .filter((obj: any) => obj.data?.content && 'fields' in obj.data.content)
+          .filter((obj) => obj.data?.content && 'fields' in obj.data.content)
           .map((obj: any) => {
             const fields = obj.data.content.fields as any;
             return {
@@ -184,9 +175,14 @@ export function useProposals(daoId?: string, limit: number = 50) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const targetDaoId = "0x0417758e231c61da4f26cd26276193efcdda10742e0b2ab308301710e9d4a4fc" || CONTRACT_ADDRESSES.DATA_DAO_ID;
+  const targetDaoId = daoId || CONTRACT_ADDRESSES.DATA_DAO_ID;
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     if (!targetDaoId) {
       setError('DAO ID not configured');
       setIsLoading(false);
@@ -196,79 +192,52 @@ export function useProposals(daoId?: string, limit: number = 50) {
     setIsLoading(true);
     setError(null);
 
-    // Query for Proposal objects using RPC
-    const rpcUrl = CURRENT_NETWORK_CONFIG.fullnodeUrl;
+    // Load proposal IDs from localStorage
+    const proposalIds: string[] = JSON.parse(
+      localStorage.getItem('kai_proposals') || '[]'
+    );
 
-    fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'suix_queryObjects',
-        params: [
-          {
-            filter: {
-              StructType: `${CONTRACT_ADDRESSES.PACKAGE_ID}::contract::Proposal`,
-            },
-            options: {
-              showContent: true,
-              showOwner: true,
-            },
-          },
-          null, // cursor
-          limit, // limit
-          false, // descending order
-        ],
-      }),
-    })
-      .then((res) => res.json())
-      .then((data: any) => {
-        if (data.error) {
-          throw new Error(data.error.message || 'Query failed');
-        }
+    if (proposalIds.length === 0) {
+      console.log('No proposals found in localStorage for DAO:', targetDaoId);
+      setProposals([]);
+      setIsLoading(false);
+      return;
+    }
 
-        const objects = data.result?.data || [];
-        const parsedProposals: Proposal[] = objects
-          .filter((obj: any) => obj.data?.content && 'fields' in obj.data.content)
+    // Fetch the actual proposal objects from blockchain
+    client
+      .multiGetObjects({
+        ids: proposalIds,
+        options: { showContent: true },
+      })
+      .then((objects) => {
+        const parsedProposals = objects
+          .filter((obj: any) => 
+            obj.data?.content && 
+            'fields' in obj.data.content &&
+            obj.data.content.fields.dao_id === targetDaoId // Filter by DAO
+          )
           .map((obj: any) => {
-            const fields = obj.data.content.fields as any;
-            
-            // Handle data field - it's a vector<u8> which can come as:
-            // - base64 string in JSON
-            // - array of numbers [1, 2, 3...]
-            let dataField = '';
-            if (fields.data) {
-              if (typeof fields.data === 'string') {
-                // Already a string - could be base64 or raw
-                dataField = fields.data;
-              } else if (Array.isArray(fields.data)) {
-                // Array of bytes - convert to base64
-                const bytes = Uint8Array.from(fields.data);
-                dataField = btoa(String.fromCharCode(...bytes));
-              }
-            }
-            
+            const fields = obj.data.content.fields;
             return {
               id: obj.data.objectId,
               daoId: fields.dao_id,
-              proposalType: Number(fields.proposal_type) as ProposalType,
-              data: dataField,
+              proposalType: Number(fields.proposal_type),
+              data: fields.data || [],
               votes: String(fields.votes || 0),
               voters: fields.voters || [],
-              ends: String(fields.ends || 0),
+              ends: String(fields.ends),
               executed: fields.executed || false,
             };
-          })
-          .filter((p) => p.daoId === targetDaoId);
+          });
 
+        console.log('Loaded proposals from localStorage:', parsedProposals);
         setProposals(parsedProposals);
+        setIsLoading(false);
       })
       .catch((err) => {
         console.error('Failed to fetch proposals:', err);
-        setError('Failed to load proposals');
-      })
-      .finally(() => {
+        setProposals([]);
         setIsLoading(false);
       });
   }, [client, targetDaoId, limit]);
@@ -280,13 +249,13 @@ export function useProposals(daoId?: string, limit: number = 50) {
  * Hook to purchase KAI tokens
  */
 export function usePurchaseKai() {
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const purchaseKai = useCallback(
     async (suiAmount: string, daoId?: string) => {
-      if (!wallet?.isConnected || !wallet.currentWallet) {
+      if (!wallet?.connected || !wallet) {
         toast({
           title: 'Wallet Not Connected',
           description: 'Please connect your wallet first.',
@@ -309,11 +278,12 @@ export function usePurchaseKai() {
 
       try {
         const txb = new TransactionBlock();
-        buildPurchaseKaiTx(txb, targetDaoId, suiAmount);
+        const senderAddress = wallet.address;
+        buildPurchaseKaiTx(txb, targetDaoId, suiAmount, senderAddress);
 
         const result = await executeTransactionWithFeedback(
           txb,
-          wallet.currentWallet,
+          wallet,
           {
             simulate: true,
             toast,
@@ -348,7 +318,7 @@ export function usePurchaseKai() {
  * Hook to vote on a proposal
  */
 export function useVote() {
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -359,7 +329,7 @@ export function useVote() {
       proposalId: string,
       daoIdParam?: string
     ) => {
-      if (!wallet?.isConnected || !wallet.currentWallet) {
+      if (!wallet?.connected || !wallet) {
         toast({
           title: 'Wallet Not Connected',
           description: 'Please connect your wallet first.',
@@ -378,7 +348,7 @@ export function useVote() {
 
         const result = await executeTransactionWithFeedback(
           txb,
-          wallet.currentWallet,
+          wallet,
           {
             simulate: true,
             toast,
@@ -413,7 +383,7 @@ export function useVote() {
  * Hook to submit data
  */
 export function useSubmitData() {
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -424,7 +394,7 @@ export function useSubmitData() {
       categoryId: string, // Now expects category object ID
       daoId?: string
     ) => {
-      if (!wallet?.isConnected || !wallet.currentWallet) {
+      if (!wallet?.connected || !wallet) {
         toast({
           title: 'Wallet Not Connected',
           description: 'Please connect your wallet first.',
@@ -443,7 +413,7 @@ export function useSubmitData() {
 
         const result = await executeTransactionWithFeedback(
           txb,
-          wallet.currentWallet,
+          wallet,
           {
             simulate: true,
             toast,
@@ -478,7 +448,7 @@ export function useSubmitData() {
  * Hook to add KAI to existing account
  */
 export function useAddKai() {
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -489,7 +459,7 @@ export function useAddKai() {
       suiAmount: string,
       daoIdParam?: string
     ) => {
-      if (!wallet?.isConnected || !wallet.currentWallet) {
+      if (!wallet?.connected || !wallet) {
         toast({
           title: 'Wallet Not Connected',
           description: 'Please connect your wallet first.',
@@ -517,7 +487,7 @@ export function useAddKai() {
 
         const result = await executeTransactionWithFeedback(
           txb,
-          wallet.currentWallet,
+          wallet,
           {
             simulate: true,
             toast,
@@ -552,7 +522,7 @@ export function useAddKai() {
  * Hook to burn KAI and redeem SUI
  */
 export function useBurnKai() {
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -563,7 +533,7 @@ export function useBurnKai() {
       kaiAmount: string,
       daoIdParam?: string
     ) => {
-      if (!wallet?.isConnected || !wallet.currentWallet) {
+      if (!wallet?.connected || !wallet) {
         toast({
           title: 'Wallet Not Connected',
           description: 'Please connect your wallet first.',
@@ -591,7 +561,7 @@ export function useBurnKai() {
 
         const result = await executeTransactionWithFeedback(
           txb,
-          wallet.currentWallet,
+          wallet,
           {
             simulate: true,
             toast,
@@ -626,7 +596,7 @@ export function useBurnKai() {
  * Hook to propose a category
  */
 export function useProposeCategory() {
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -638,7 +608,7 @@ export function useProposeCategory() {
       daoId?: string,
       accountCapId?: string
     ) => {
-      if (!wallet?.isConnected || !wallet.currentWallet) {
+      if (!wallet?.connected || !wallet) {
         toast({
           title: 'Wallet Not Connected',
           description: 'Please connect your wallet first.',
@@ -675,7 +645,7 @@ export function useProposeCategory() {
 
         const result = await executeTransactionWithFeedback(
           txb,
-          wallet.currentWallet,
+          wallet,
           {
             simulate: true,
             toast,
@@ -710,7 +680,7 @@ export function useProposeCategory() {
  * Hook to execute a category proposal
  */
 export function useExecuteCategoryProposal() {
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -720,7 +690,7 @@ export function useExecuteCategoryProposal() {
       proposalId: string,
       clockId: string = '0x6'
     ) => {
-      if (!wallet?.isConnected || !wallet.currentWallet) {
+      if (!wallet?.connected || !wallet) {
         toast({
           title: 'Wallet Not Connected',
           description: 'Please connect your wallet first.',
@@ -737,7 +707,7 @@ export function useExecuteCategoryProposal() {
 
         const result = await executeTransactionWithFeedback(
           txb,
-          wallet.currentWallet,
+          wallet,
           {
             simulate: true,
             toast,
@@ -772,7 +742,7 @@ export function useExecuteCategoryProposal() {
  * Hook to execute a data proposal
  */
 export function useExecuteDataProposal() {
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -782,7 +752,7 @@ export function useExecuteDataProposal() {
       proposalId: string,
       clockId: string = '0x6'
     ) => {
-      if (!wallet?.isConnected || !wallet.currentWallet) {
+      if (!wallet?.connected || !wallet) {
         toast({
           title: 'Wallet Not Connected',
           description: 'Please connect your wallet first.',
@@ -799,7 +769,7 @@ export function useExecuteDataProposal() {
 
         const result = await executeTransactionWithFeedback(
           txb,
-          wallet.currentWallet,
+          wallet,
           {
             simulate: true,
             toast,
@@ -834,7 +804,7 @@ export function useExecuteDataProposal() {
  * Hook to execute a price proposal
  */
 export function useExecutePriceProposal() {
-  const wallet = useCurrentWallet();
+  const wallet = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -845,7 +815,7 @@ export function useExecutePriceProposal() {
       marketplaceId: string,
       clockId: string = '0x6'
     ) => {
-      if (!wallet?.isConnected || !wallet.currentWallet) {
+      if (!wallet?.connected || !wallet) {
         toast({
           title: 'Wallet Not Connected',
           description: 'Please connect your wallet first.',
@@ -862,7 +832,7 @@ export function useExecutePriceProposal() {
 
         const result = await executeTransactionWithFeedback(
           txb,
-          wallet.currentWallet,
+          wallet,
           {
             simulate: true,
             toast,
@@ -892,3 +862,4 @@ export function useExecutePriceProposal() {
 
   return { executeProposal, isLoading };
 }
+

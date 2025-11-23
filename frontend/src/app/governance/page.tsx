@@ -78,7 +78,9 @@ export default function GovernancePage() {
 
         if (result) {
             // Proposal list will auto-refresh
-            window.location.reload();
+            if (typeof window !== 'undefined') {
+                window.location.reload();
+            }
         }
     };
 
@@ -96,7 +98,9 @@ export default function GovernancePage() {
         if (proposalType === ProposalType.CATEGORY) {
             const result = await executeCategoryProposal(dao.id, proposalId);
             if (result) {
-                window.location.reload();
+                if (typeof window !== 'undefined') {
+                    window.location.reload();
+                }
             }
         } else {
             toast({

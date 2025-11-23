@@ -52,14 +52,16 @@ export default function CreateProposalPage() {
       });
 
       try {
-        const existingProposals = JSON.parse(localStorage.getItem('proposals') || '[]');
+        const existingProposals = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('proposals') || '[]') : [];
         const newProposal = {
           ...proposalData,
           id: result.blobId, // Use the blobId as the unique ID
         };
         
         existingProposals.push(newProposal);
-        localStorage.setItem('proposals', JSON.stringify(existingProposals));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('proposals', JSON.stringify(existingProposals));
+        }
         
         router.push('/dashboard');
       } catch (e) {

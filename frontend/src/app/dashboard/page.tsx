@@ -33,7 +33,7 @@ import {
 import { useDao, useAccountCap, usePurchaseKai, useAddKai, useBurnKai, useProposals } from "@/hooks/use-dao";
 import { useSuiWallet } from "@/hooks/use-sui-wallet";
 import { formatSuiAmount, parseSuiAmount, CONTRACT_ADDRESSES } from "@/lib/sui/config";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
   const { dao, isLoading: daoLoading } = useDao();

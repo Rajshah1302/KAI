@@ -23,82 +23,62 @@ export function useCategories(limit: number = 100) {
     setIsLoading(true);
     setError(null);
 
-    if (!CONTRACT_ADDRESSES.PACKAGE_ID) {
-      setError('Contract not configured');
+    // TEMPORARY: Using placeholder category object IDs
+    // TODO: Create real categories using: sui client call --package 0x2e5f... --module kai --function create_test_category
+    // For now, we'll use the DAO object ID as a placeholder since submit_data requires a valid object reference
+    const PLACEHOLDER_CATEGORY = CONTRACT_ADDRESSES.DATA_DAO_ID || '0xd67e02be1ffbe3e51a8f3d44f6cff3e1e089ca83d3a30d07a47a65fe08bab476';
+    
+    const defaultCategories: DataCategory[] = [
+      {
+        id: `${PLACEHOLDER_CATEGORY}_1`, // Make IDs unique for React keys
+        name: 'Financial Data',
+        description: 'Financial market data, stock prices, trading data',
+        rewardAmount: '100',
+        active: true,
+      },
+      {
+        id: `${PLACEHOLDER_CATEGORY}_2`,
+        name: 'Healthcare',
+        description: 'Medical records, health metrics, clinical trials',
+        rewardAmount: '150',
+        active: true,
+      },
+      {
+        id: `${PLACEHOLDER_CATEGORY}_3`,
+        name: 'IoT & Sensors',
+        description: 'Internet of Things data, sensor readings',
+        rewardAmount: '80',
+        active: true,
+      },
+      {
+        id: `${PLACEHOLDER_CATEGORY}_4`,
+        name: 'Social Media',
+        description: 'Social network data, engagement metrics',
+        rewardAmount: '120',
+        active: true,
+      },
+      {
+        id: `${PLACEHOLDER_CATEGORY}_5`,
+        name: 'Research',
+        description: 'Academic research data, experiments',
+        rewardAmount: '200',
+        active: true,
+      },
+      {
+        id: `${PLACEHOLDER_CATEGORY}_6`,
+        name: 'Other',
+        description: 'Miscellaneous datasets',
+        rewardAmount: '50',
+        active: true,
+      },
+    ];
+
+    // Simulate async loading
+    setTimeout(() => {
+      setCategories(defaultCategories);
       setIsLoading(false);
-      return;
-    }
-
-    // Query for DataCategory objects
-    // Categories are shared objects, so we query by type using RPC
-    const structType = `${CONTRACT_ADDRESSES.PACKAGE_ID}::contract::DataCategory`;
-    
-    // Use RPC endpoint - construct URL from network config
-    const rpcUrl = CURRENT_NETWORK_CONFIG.fullnodeUrl;
-    
-    fetch(`${rpcUrl}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'suix_queryObjects',
-        params: [
-          {
-            filter: {
-              StructType: structType,
-            },
-            options: {
-              showContent: true,
-              showOwner: true,
-            },
-          },
-          null, // cursor
-          limit, // limit
-          false, // descending order
-        ],
-      }),
-    })
-      .then((res) => res.json())
-      .then((data: any) => {
-        if (data.error) {
-          throw new Error(data.error.message || 'Query failed');
-        }
-        
-        // Extract objects from RPC response
-        const objects = data.result?.data || [];
-        const parsedCategories: DataCategory[] = objects
-          .filter((obj: any) => obj.data?.content && 'fields' in obj.data.content)
-          .map((obj: any) => {
-            const fields = obj.data.content.fields as any;
-            const nameBytes = fields.name || [];
-            const descBytes = fields.description || [];
-            
-            return {
-              id: obj.data.objectId,
-              name: nameBytes.length > 0 
-                ? new TextDecoder().decode(new Uint8Array(nameBytes))
-                : '',
-              description: descBytes.length > 0
-                ? new TextDecoder().decode(new Uint8Array(descBytes))
-                : '',
-              rewardAmount: String(fields.reward_amount || 0),
-              active: fields.active || false,
-            };
-          })
-          .filter((cat: DataCategory) => cat.active); // Only return active categories
-
-        setCategories(parsedCategories);
-        setIsLoading(false);
-      })
-      .catch((err: any) => {
-        console.error('Failed to fetch categories:', err);
-        // Fallback: return empty array
-        setCategories([]);
-        setError('Failed to load categories. Please ensure the contract is deployed.');
-        setIsLoading(false);
-      });
-  }, [client, limit]);
+    }, 100);
+  }, [limit]);
 
   return { categories, isLoading, error };
 }

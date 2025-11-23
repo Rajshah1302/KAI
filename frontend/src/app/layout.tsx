@@ -6,6 +6,9 @@ import { SuiWalletProvider } from '@/providers/sui-wallet-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
+// Force dynamic rendering to prevent SSR issues with wallet provider
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Kai',
   description:

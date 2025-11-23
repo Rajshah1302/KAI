@@ -103,7 +103,8 @@ function validateContractAddresses() {
 export function buildPurchaseKaiTx(
   txb: TransactionBlock,
   daoId: string,
-  suiAmount: string | bigint
+  suiAmount: string | bigint,
+  senderAddress: string
 ): TransactionBlock {
   validateContractAddresses();
   
@@ -114,13 +115,15 @@ export function buildPurchaseKaiTx(
   // Normalize the DAO ID address
   const normalizedDaoId = normalizeSuiAddress(daoId);
   
-  txb.moveCall({
-    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.PURCHASE_KAI}`,
+  const [accountCap] = txb.moveCall({    target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.PURCHASE_KAI}`,
     arguments: [
       txb.object(normalizedDaoId),
       coin,
     ],
   });
+  
+  // Transfer the AccountCap to the sender
+  txb.transferObjects([accountCap], senderAddress);
 
   return txb;
 }
@@ -194,13 +197,17 @@ export function buildProposeCategoryTx(
   
   const rewardAmountMist = typeof rewardAmount === 'string' ? parseSuiAmount(rewardAmount, 6) : rewardAmount;
   
+  // Convert strings to byte arrays (vector<u8>)
+  const nameBytes = Array.from(new TextEncoder().encode(name));
+  const descriptionBytes = Array.from(new TextEncoder().encode(description));
+  
   txb.moveCall({
     target: `${CONTRACT_ADDRESSES.PACKAGE_ID}::kai::${CONTRACT_FUNCTIONS.PROPOSE_CATEGORY}`,
     arguments: [
       txb.object(normalizeSuiAddress(daoId)),
       txb.object(normalizeSuiAddress(accountCapId)),
-      txb.pure.string(name),
-      txb.pure.string(description),
+      txb.pure(nameBytes, 'vector<u8>'),
+      txb.pure(descriptionBytes, 'vector<u8>'),
       txb.pure.u64(rewardAmountMist),
       txb.object(normalizeSuiAddress(clockId)),
     ],

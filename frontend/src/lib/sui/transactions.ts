@@ -6,7 +6,7 @@
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { SuiTransactionBlockResponse, SuiClient } from '@mysten/sui.js/client';
 import { Signer } from '@mysten/sui.js/cryptography';
-import { suiClient, DEFAULT_NETWORK } from './config';
+import { suiClient, DEFAULT_NETWORK, CURRENT_NETWORK_CONFIG } from './config';
 
 export interface TransactionOptions {
   /** Whether to simulate the transaction before execution */
@@ -65,11 +65,11 @@ export async function estimateGas(
     }
 
     // Fallback: return default gas budget
-    return BigInt(10_000_000); // 0.01 SUI
+    return BigInt(50_000_000); // 0.05 SUI
   } catch (error: any) {
     console.error('Gas estimation failed:', error);
     // Return default gas budget on error
-    return BigInt(10_000_000);
+    return BigInt(50_000_000); // 0.05 SUI
   }
 }
 
@@ -326,21 +326,10 @@ export async function executeTransactionWithFeedback(
 
   try {
     // Get account address from wallet
-    const account = wallet?.accounts?.[0];
-    if (!account?.address) {
-      throw new Error('Wallet account not found');
+    const address = wallet?.address;
+    if (!address) {
+      throw new Error('Wallet not connected');
     }
-
-    // Set sender on transaction block
-    txb.setSender(account.address);
-
-    // Create a wallet signer adapter
-    const signer = {
-      getAddress: async () => account.address,
-      signAndExecuteTransactionBlock: async (params: any) => {
-        return wallet.signAndExecuteTransactionBlock(params);
-      },
-    } as Signer;
 
     if (toast) {
       toast({
@@ -349,14 +338,136 @@ export async function executeTransactionWithFeedback(
       });
     }
 
-    const result = await executeTransaction(txb, signer, txOptions);
+    // Suiet wallet kit handles transaction execution directly
+    const result = await wallet.signAndExecuteTransactionBlock({
+      transactionBlock: txb,
+      options: {
+        showEffects: true,
+        showEvents: true,
+        showObjectChanges: true,
+        showInput: true,
+      },
+    });
 
-    if (result.error) {
-      const errorMsg = result.error;
+    console.log('Transaction result:', {
+      digest: result.digest,
+      effects: result.effects,
+      events: result.events,
+      objectChanges: result.objectChanges,
+      rawEffects: result.rawEffects,
+      fullResult: result,
+    });
+
+    // Check if effects exist
+    if (!result.effects && result.rawEffects) {
+      console.log('Effects not parsed, but rawEffects available. Attempting to decode...');
+      console.log('Raw effects bytes:', result.rawEffects);
+      
+      // The transaction was executed, but effects aren't parsed
+      // Since we have rawEffects, the transaction likely succeeded
+      if (toast) {
+        toast({
+          title: 'Transaction Submitted',
+          description: `Transaction ${result.digest.slice(0, 16)}... was submitted successfully. Verifying on-chain...`,
+          variant: 'default',
+        });
+      }
+      
+      // Try to get transaction details from the blockchain
+      try {
+        const client = new SuiClient({ url: CURRENT_NETWORK_CONFIG.fullnodeUrl });
+        const txDetails = await client.getTransactionBlock({
+          digest: result.digest,
+          options: {
+            showEffects: true,
+            showEvents: true,
+            showObjectChanges: true,
+          }
+        });
+        
+        console.log('Fetched transaction details:', txDetails);
+        
+        if (txDetails.effects?.status?.status === 'success') {
+          console.log('✅ Transaction confirmed successful on-chain!');
+          
+          // Save created Proposal objects to localStorage
+          if (txDetails.objectChanges) {
+            const createdProposals = txDetails.objectChanges.filter(
+              (change: any) => 
+                change.type === 'created' && 
+                change.objectType?.includes('::kai::Proposal')
+            );
+            
+            if (createdProposals.length > 0 && typeof window !== 'undefined') {
+              createdProposals.forEach((proposal: any) => {
+                const proposalId = proposal.objectId;
+                console.log('Saving proposal to localStorage:', proposalId);
+                
+                // Store in localStorage for later retrieval
+                const existingProposals = JSON.parse(
+                  localStorage.getItem('kai_proposals') || '[]'
+                );
+                if (!existingProposals.includes(proposalId)) {
+                  existingProposals.push(proposalId);
+                  localStorage.setItem('kai_proposals', JSON.stringify(existingProposals));
+                }
+              });
+            }
+          }
+          
+          if (toast) {
+            toast({
+              title: 'Transaction Successful',
+              description: `Transaction confirmed: ${result.digest.slice(0, 8)}...`,
+            });
+          }
+          onSuccess?.(txDetails as any);
+          return txDetails as any;
+        } else {
+          const errorMsg = txDetails.effects?.status?.error || 'Transaction failed';
+          console.error('Transaction failed:', errorMsg);
+          if (toast) {
+            toast({
+              title: 'Transaction Failed',
+              description: errorMsg,
+              variant: 'destructive',
+            });
+          }
+          onError?.(errorMsg);
+          return null;
+        }
+      } catch (fetchError: any) {
+        console.error('Failed to fetch transaction details:', fetchError);
+        // Return the original result anyway
+        return result as any;
+      }
+    }
+    
+    if (!result.effects) {
+      console.error('Transaction result missing effects and rawEffects:', result);
+      
+      if (toast) {
+        toast({
+          title: 'Transaction Status Unknown',
+          description: `Transaction ${result.digest.slice(0, 8)}... submitted but status unclear. Check Sui Explorer.`,
+          variant: 'default',
+        });
+      }
+      
+      return result as any;
+    }
+
+    if (result.effects?.status?.status !== 'success') {
+      const errorMsg = result.effects?.status?.error || 'Transaction failed';
+      const errorDetails = JSON.stringify(result.effects?.status, null, 2);
+      
+      console.error('Transaction failed with details:', errorDetails);
+      console.error('Full effects:', result.effects);
+      
       if (toast) {
         toast({
           title: 'Transaction Failed',
-          description: errorMsg,
+          description: `${errorMsg}\n\nCheck console for full details.`,
           variant: 'destructive',
         });
       }
@@ -364,19 +475,8 @@ export async function executeTransactionWithFeedback(
       return null;
     }
 
-    if (!isTransactionSuccessful(result)) {
-      const errorMsg = 'Transaction failed. Please check the details.';
-      if (toast) {
-        toast({
-          title: 'Transaction Failed',
-          description: errorMsg,
-          variant: 'destructive',
-        });
-      }
-      onError?.(errorMsg);
-      return null;
-    }
-
+    console.log('✅ Transaction successful!', result.digest);
+    
     if (toast) {
       toast({
         title: 'Transaction Successful',
@@ -387,11 +487,17 @@ export async function executeTransactionWithFeedback(
     onSuccess?.(result);
     return result;
   } catch (error: any) {
+    console.error('Transaction execution error:', {
+      message: error.message,
+      stack: error.stack,
+      full: error,
+    });
+    
     const errorMsg = parseTransactionError(error);
     if (toast) {
       toast({
         title: 'Transaction Failed',
-        description: errorMsg,
+        description: `${errorMsg}\n\nError: ${error.message || 'Unknown error'}\n\nCheck console for details.`,
         variant: 'destructive',
       });
     }

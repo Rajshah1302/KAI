@@ -5,7 +5,7 @@
  * Custom hooks for wallet connection and interaction
  */
 
-import { useCurrentWallet, useWallets } from '@mysten/dapp-kit';
+import { useWallet } from '@suiet/wallet-kit';
 import { useSuiClient } from '@mysten/dapp-kit';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { normalizeSuiAddress } from '@mysten/sui.js/utils';
@@ -24,12 +24,12 @@ export interface WalletState {
  * Hook to get current wallet state with SuiNS resolution
  */
 export function useSuiWallet() {
-  const currentWallet = useCurrentWallet();
+  const wallet = useWallet();
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [isLoadingName, setIsLoadingName] = useState(false);
 
-  const address = currentWallet?.isConnected && currentWallet?.accounts?.[0]?.address
-    ? normalizeSuiAddress(currentWallet.accounts[0].address)
+  const address = wallet?.connected && wallet?.address
+    ? normalizeSuiAddress(wallet.address)
     : null;
 
   // Resolve SuiNS name when address changes
@@ -40,8 +40,8 @@ export function useSuiWallet() {
         .then((name) => {
           setDisplayName(name);
         })
-        .catch((error) => {
-          console.error('Failed to resolve SuiNS name:', error);
+        .catch(() => {
+          // SuiNS service might be unavailable - silently fail
           setDisplayName(null);
         })
         .finally(() => {
@@ -54,12 +54,12 @@ export function useSuiWallet() {
   }, [address]);
 
   return {
-    isConnected: currentWallet?.isConnected ?? false,
+    isConnected: wallet?.connected ?? false,
     address,
     displayName,
-    isLoading: isLoadingName || (currentWallet?.isConnecting ?? false),
-    wallet: currentWallet,
-    currentAccount: currentWallet?.isConnected ? (currentWallet.accounts?.[0] ?? null) : null,
+    isLoading: isLoadingName,
+    wallet,
+    currentAccount: wallet?.address ? { address: wallet.address } : null,
   };
 }
 
@@ -67,11 +67,10 @@ export function useSuiWallet() {
  * Hook to get available wallets
  */
 export function useAvailableWallets() {
-  const wallets = useWallets();
+  // Suiet wallet kit handles wallet discovery automatically
   return {
-    configuredWallets: wallets.filter((w: any) => w.installed),
-    availableWallets: wallets.filter((w: any) => !w.installed),
-    allWallets: wallets,
+    configuredWallets: [],
+    availableWallets: [],
   };
 }
 

@@ -1,3 +1,4 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Rajshah1302/KAI)
 # KAI Data DAO
 
 A decentralized autonomous organization for data sovereignty built on Sui Network. KAI enables cryptographic data ownership, community governance, and direct creator compensation through Seal encryption, Walrus storage, and on-chain voting mechanisms.
